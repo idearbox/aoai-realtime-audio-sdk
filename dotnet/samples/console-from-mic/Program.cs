@@ -44,11 +44,11 @@ public class Program
         // audio transcription with whisper.
         await session.ConfigureSessionAsync(new ConversationSessionOptions()
         {
-            Voice = ConversationVoice.Alloy,
+            Voice = ConversationVoice.Echo,
             //Tools = { finishConversationTool, getAGVStateTool },
             Tools = { getAGVStateTool },
-            InputAudioFormat = ConversationAudioFormat.Pcm16,
-            OutputAudioFormat = ConversationAudioFormat.Pcm16,
+            //InputAudioFormat = ConversationAudioFormat.Pcm16,
+            //OutputAudioFormat = ConversationAudioFormat.Pcm16,
             InputTranscriptionOptions = new()
             {
                 Model = "whisper-1",
@@ -116,11 +116,6 @@ public class Program
                 //    Console.Write("x");
             }
 
-            //if (update is ConversationResponseFinishedUpdate finishUpdate)
-            //{
-            //    //session.StartResponse();
-            //}
-
             // response.output_item.done tells us that a model-generated item with streaming content is completed.
             // That's a good signal to provide a visual break and perform final evaluation of tool calls.
 
@@ -134,7 +129,7 @@ public class Program
                     ConversationItem functionOutputItem = ConversationItem.CreateFunctionCallOutput(itemFinishedUpdate.FunctionCallId, r);
 
                     await session.AddItemAsync(functionOutputItem);
-                    await session.StartResponseAsync();
+                    //await session.StartResponseAsync();
                 }
 
                 if (itemFinishedUpdate.FunctionName == finishConversationTool.Name)
@@ -142,6 +137,25 @@ public class Program
                     Console.WriteLine($" <<< Finish tool invoked -- ending conversation!");
                     break;
                 }
+            }
+
+            if (update is ConversationResponseFinishedUpdate turnFinishedUpdate)
+            {
+                Console.WriteLine($"  -- Model turn generation finished. Status: {turnFinishedUpdate.Status}");
+
+                // Here, if we processed tool calls in the course of the model turn, we finish the
+                // client turn to resume model generation. The next model turn will reflect the tool
+                // responses that were already provided.
+                if (turnFinishedUpdate.CreatedItems.Any(item => item.FunctionName?.Length > 0))
+                {
+                    Console.WriteLine($"  -- Ending client turn for pending tool responses");
+                    await session.StartResponseAsync();
+                }
+                //else
+                //{
+                //    Console.WriteLine("xxx");
+                //    break;
+                //}
             }
 
             // error commands, as the name implies, are raised when something goes wrong.
@@ -152,8 +166,6 @@ public class Program
                 Console.WriteLine($" <<< ERROR: {errorUpdate.Message}");
                 Console.WriteLine(errorUpdate.GetRawContent().ToString());
                 break;
-                OpenAIClient c;
-                ChatTool cc;
             }
         }
     }
