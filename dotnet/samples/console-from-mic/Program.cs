@@ -1,6 +1,8 @@
 ﻿using Azure.AI.OpenAI;
 using Azure.Identity;
+using Microsoft.VisualBasic;
 using OpenAI;
+using OpenAI.Chat;
 using OpenAI.RealtimeConversation;
 using System.ClientModel;
 
@@ -24,11 +26,29 @@ public class Program
             Parameters = BinaryData.FromString("{}")
         };
 
+        ConversationFunctionTool getAGVStateTool = new()
+        {
+            Name = "user_wants_to_get_agv_state",
+            Description = "Invoked when the user ask agv state, or ask agvs have any alarm. the result files are " +
+                            "'agv_total_count' is agv tatol count, " +
+                            "'agv_id_state_alarm' is agv id list which has alarm,  " +
+                            "'agv_id_state_normal' is agv id list which is normal state,  " +
+                            "'agv_state_alarm' is list of  alarm detail info by  agv id, agv state, alarm id, alarm description ",
+
+            Parameters = BinaryData.FromString("{}")
+        };
+        ChatCompletionOptions options = new ChatCompletionOptions();
+
+
         // Now we configure the session using the tool we created along with transcription options that enable input
         // audio transcription with whisper.
         await session.ConfigureSessionAsync(new ConversationSessionOptions()
         {
-            Tools = { finishConversationTool },
+            Voice = ConversationVoice.Alloy,
+            //Tools = { finishConversationTool, getAGVStateTool },
+            Tools = { getAGVStateTool },
+            InputAudioFormat = ConversationAudioFormat.Pcm16,
+            OutputAudioFormat = ConversationAudioFormat.Pcm16,
             InputTranscriptionOptions = new()
             {
                 Model = "whisper-1",
@@ -86,18 +106,37 @@ public class Program
 
             // Item streaming delta updates provide a combined view into incremental item data including output
             // the audio response transcript, function arguments, and audio data.
-            if (update is ConversationItemStreamingPartDeltaUpdate deltaUpdate)
+            if (update is ConversationItemStreamingPartDeltaUpdate deltaUpdate )
             {
                 Console.Write(deltaUpdate.AudioTranscript);
                 Console.Write(deltaUpdate.Text);
-                speakerOutput.EnqueueForPlayback(deltaUpdate.AudioBytes);
+                if (deltaUpdate.AudioBytes != null)
+                    speakerOutput.EnqueueForPlayback(deltaUpdate.AudioBytes);
+                //else
+                //    Console.Write("x");
             }
+
+            //if (update is ConversationResponseFinishedUpdate finishUpdate)
+            //{
+            //    //session.StartResponse();
+            //}
 
             // response.output_item.done tells us that a model-generated item with streaming content is completed.
             // That's a good signal to provide a visual break and perform final evaluation of tool calls.
+
             if (update is ConversationItemStreamingFinishedUpdate itemFinishedUpdate)
             {
                 Console.WriteLine();
+                if (itemFinishedUpdate.FunctionName == getAGVStateTool.Name)
+                {
+                    Console.WriteLine($" <<< Get Agv State tool invoked -- get!");
+                    string r = GetAGVState();
+                    ConversationItem functionOutputItem = ConversationItem.CreateFunctionCallOutput(itemFinishedUpdate.FunctionCallId, r);
+
+                    await session.AddItemAsync(functionOutputItem);
+                    await session.StartResponseAsync();
+                }
+
                 if (itemFinishedUpdate.FunctionName == finishConversationTool.Name)
                 {
                     Console.WriteLine($" <<< Finish tool invoked -- ending conversation!");
@@ -113,16 +152,18 @@ public class Program
                 Console.WriteLine($" <<< ERROR: {errorUpdate.Message}");
                 Console.WriteLine(errorUpdate.GetRawContent().ToString());
                 break;
+                OpenAIClient c;
+                ChatTool cc;
             }
         }
     }
 
     private static RealtimeConversationClient GetConfiguredClient()
     {
-        string? aoaiEndpoint = Environment.GetEnvironmentVariable("AZURE_OPENAI_ENDPOINT");
+        string? aoaiEndpoint = "https://kisoo-m3xuw55t-eastus2.openai.azure.com/";// Environment.GetEnvironmentVariable("AZURE_OPENAI_ENDPOINT");
         string? aoaiUseEntra = Environment.GetEnvironmentVariable("AZURE_OPENAI_USE_ENTRA");
-        string? aoaiDeployment = Environment.GetEnvironmentVariable("AZURE_OPENAI_DEPLOYMENT");
-        string? aoaiApiKey = Environment.GetEnvironmentVariable("AZURE_OPENAI_API_KEY");
+        string? aoaiDeployment = "gpt-4o-realtime-preview";// Environment.GetEnvironmentVariable("AZURE_OPENAI_DEPLOYMENT");
+        string? aoaiApiKey = "8fCEvgpHLemju8nyMq2SSEIa4mH1ZEpYznBT1RBgTCqj7YVQhvYcJQQJ99AKACHYHv6XJ3w3AAAAACOG4BAa";// Environment.GetEnvironmentVariable("AZURE_OPENAI_API_KEY");
         string? oaiApiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY");
 
         if (aoaiEndpoint is not null && bool.TryParse(aoaiUseEntra, out bool useEntra) && useEntra)
@@ -189,4 +230,31 @@ public class Program
         OpenAIClient aoaiClient = new(new ApiKeyCredential(oaiApiKey));
         return aoaiClient.GetRealtimeConversationClient("gpt-4o-realtime-preview-2024-10-01");
     }
+
+    public static string GetAGVState()
+    {
+        string result = $@"{{
+                ""agv_total_count"": ""30"",
+                ""agv_id_state_alarm"": ""103,104"",
+                ""agv_id_state_normal"": ""101,102,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127,128,129,130"",
+                ""agv_state_alarm"": [
+                    {{
+                        ""agv_id"": ""103"",
+                        ""agv_state"": ""alarm"",
+                        ""alarm_id"": ""1004"",
+                        ""alarm_description"": ""battery_low""
+                    }},
+                    {{
+                        ""agv_id"": ""104"",
+                        ""agv_state"": ""alarm"",
+                        ""alarm_id"": ""1007"",
+                        ""alarm_description"": ""e_stop""
+                    }}
+                ]
+
+            }}";
+        return result;
+    }
+
 }
+
