@@ -24,20 +24,26 @@ public class Program
         // First, we create a client according to configured environment variables (see end of file) and then start
         // a new conversation session.
         initClient();
-
+        
         using RealtimeConversationSession session = await realtimeClient.StartConversationSessionAsync();
         // Set the system message to guide the AI's behavior
         var contentItems = new List<ConversationContentPart>
            {
-               ConversationContentPart.FromInputText("You are an AI assistant for a Fleet Management System (FMS)."),
-               ConversationContentPart.FromInputText("answer questions based on information you searched in the knowledge base, accessible with the 'search' tool"),
-               ConversationContentPart.FromInputText("Always use the 'search' tool to check the knowledge base before answering a question"),
+               ConversationContentPart.FromInputText("You are an AI assistant for a Fleet Management System (FMS) for smart port."),
+               ConversationContentPart.FromInputText("Always answer questions based on information you searched in the knowledge base, accessible with the 'search' tool"),
                ConversationContentPart.FromInputText("The user is listening to answers with audio, so it's *super* important that answers are as short as possible, a single sentence if at all possible."),
-               ConversationContentPart.FromInputText("Provide concise and professional answers."),
+               ConversationContentPart.FromInputText("Always use the following step-by-step instructions to respond:"), 
+               ConversationContentPart.FromInputText("1. Always use the 'search' tool to check the knowledge base before answering a question"),
+               ConversationContentPart.FromInputText("2. Produce an answer that's as short as possible. "),
+               ConversationContentPart.FromInputText("3. If the answer isn't in the knowledge base, say you don't know."),
+               ConversationContentPart.FromInputText("사용자에게 음성 전달할때 다음과 같은 규칙으로 발음해줘"),
+               ConversationContentPart.FromInputText("1. AGV =>A.G.V"),
+               ConversationContentPart.FromInputText("2. 304 AGV=> 삼공사 A.G.V"),
+               ConversationContentPart.FromInputText("2. TOS => 토스"),
            };
         ConversationItem systemMessage = ConversationItem.CreateSystemMessage("", contentItems);
         await session.AddItemAsync(systemMessage);
-
+        
         // We'll add a simple function tool that enables the model to interpret user input to figure out when it
         // might be a good time to stop the interaction.
         ConversationFunctionTool finishConversationTool = new()
@@ -59,14 +65,24 @@ public class Program
             Parameters = BinaryData.FromString("{}")
         };
 
+        string parameterSchemaJson = @"
+        {
+            ""type"": ""object"",
+            ""properties"": {
+                ""query"": {
+                    ""type"": ""string"",
+                    ""description"": ""Search query""
+                }
+            },
+            ""required"": [""query""]
+        }";
+
         ConversationFunctionTool searchTool = new()
         {
             Name = "search",
-            Description = "Invoked before answer to user" +
-                            "Results are formatted as a source name first in square brackets, followed by the text " +
-                            "content, and a line with '-----' at the end of each result.",
-
-            Parameters = BinaryData.FromString("{}")
+            Description = "Search the knowledge base, The knowledge base is in English, translate to and from English if needed." +
+                            "Results are text content.",
+            Parameters = BinaryData.FromString(parameterSchemaJson),
         };
 
 
@@ -163,15 +179,16 @@ public class Program
                     //await session.StartResponseAsync();
                 }
 
-                //if (itemFinishedUpdate.FunctionName == searchTool.Name)
-                //{
-                //    Console.WriteLine($" <<< Get Agv State tool invoked -- get!");
-                //    string r = DoSearch();
-                //    ConversationItem functionOutputItem = ConversationItem.CreateFunctionCallOutput(itemFinishedUpdate.FunctionCallId, r);
+                if (itemFinishedUpdate.FunctionName == searchTool.Name)
+                {
+                    Console.WriteLine($" <<< **Search tool invoked -- get!");
+                    string r = DoSearch(itemFinishedUpdate.FunctionCallArguments);
+                    Console.WriteLine($" <<< **Search result : {r}");
+                    ConversationItem functionOutputItem = ConversationItem.CreateFunctionCallOutput(itemFinishedUpdate.FunctionCallId, r);
 
-                //    await session.AddItemAsync(functionOutputItem);
-                //    //await session.StartResponseAsync();
-                //}
+                    await session.AddItemAsync(functionOutputItem);
+                    //await session.StartResponseAsync();
+                }
 
                 if (itemFinishedUpdate.FunctionName == finishConversationTool.Name)
                 {
@@ -247,16 +264,19 @@ public class Program
 
     private static string DoSearch(string message)
     {
+        Console.WriteLine($" <<< **DoSearch :{message}");
         string? searchEndpoint = "https://ai-search-lab02.search.windows.net";
         string? searchKey = "ArWRDDWtZWJw7gSAWlnZQVH5paZThIxNlidtCLQSVQAzSeBarm4l";
-        string? searchIndex = "vector-1736395282358";
+        //string? searchIndex = "vector-1736395282358";
+        string? searchIndex = "vector-1736455121106";
+        
 
         ChatCompletionOptions options = new();
         options.AddDataSource(new AzureSearchChatDataSource()
         {
             Endpoint = new Uri(searchEndpoint),
             IndexName = searchIndex,
-            TopNDocuments = 3,
+            TopNDocuments = 10,
             Authentication = DataSourceAuthentication.FromApiKey(searchKey),
         });
 
