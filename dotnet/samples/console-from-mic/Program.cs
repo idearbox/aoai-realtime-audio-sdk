@@ -1,21 +1,42 @@
 ﻿using Azure.AI.OpenAI;
+using Azure.AI.OpenAI.Chat;
+using Azure.Core;
 using Azure.Identity;
 using Microsoft.VisualBasic;
 using OpenAI;
 using OpenAI.Chat;
 using OpenAI.RealtimeConversation;
 using System.ClientModel;
+using System.ClientModel.Primitives;
+using System.Security.Cryptography;
+using System.Threading.Tasks;
 
 #pragma warning disable OPENAI002
+#pragma warning disable AOAI001 
 
 public class Program
 {
+    private static RealtimeConversationClient realtimeClient;
+    private static ChatClient chatClient;
+
     public static async Task Main(string[] args)
     {
         // First, we create a client according to configured environment variables (see end of file) and then start
         // a new conversation session.
-        RealtimeConversationClient client = GetConfiguredClient();
-        using RealtimeConversationSession session = await client.StartConversationSessionAsync();
+        initClient();
+
+        using RealtimeConversationSession session = await realtimeClient.StartConversationSessionAsync();
+        // Set the system message to guide the AI's behavior
+        var contentItems = new List<ConversationContentPart>
+           {
+               ConversationContentPart.FromInputText("You are an AI assistant for a Fleet Management System (FMS)."),
+               ConversationContentPart.FromInputText("answer questions based on information you searched in the knowledge base, accessible with the 'search' tool"),
+               ConversationContentPart.FromInputText("Always use the 'search' tool to check the knowledge base before answering a question"),
+               ConversationContentPart.FromInputText("The user is listening to answers with audio, so it's *super* important that answers are as short as possible, a single sentence if at all possible."),
+               ConversationContentPart.FromInputText("Provide concise and professional answers."),
+           };
+        ConversationItem systemMessage = ConversationItem.CreateSystemMessage("", contentItems);
+        await session.AddItemAsync(systemMessage);
 
         // We'll add a simple function tool that enables the model to interpret user input to figure out when it
         // might be a good time to stop the interaction.
@@ -37,18 +58,28 @@ public class Program
 
             Parameters = BinaryData.FromString("{}")
         };
-        ChatCompletionOptions options = new ChatCompletionOptions();
+
+        ConversationFunctionTool searchTool = new()
+        {
+            Name = "search",
+            Description = "Invoked before answer to user" +
+                            "Results are formatted as a source name first in square brackets, followed by the text " +
+                            "content, and a line with '-----' at the end of each result.",
+
+            Parameters = BinaryData.FromString("{}")
+        };
 
 
         // Now we configure the session using the tool we created along with transcription options that enable input
         // audio transcription with whisper.
         await session.ConfigureSessionAsync(new ConversationSessionOptions()
         {
-            Voice = ConversationVoice.Echo,
+            Voice = ConversationVoice.Alloy,
             //Tools = { finishConversationTool, getAGVStateTool },
-            Tools = { getAGVStateTool },
+            Tools = { getAGVStateTool, searchTool },
             //InputAudioFormat = ConversationAudioFormat.Pcm16,
             //OutputAudioFormat = ConversationAudioFormat.Pcm16,
+
             InputTranscriptionOptions = new()
             {
                 Model = "whisper-1",
@@ -106,7 +137,7 @@ public class Program
 
             // Item streaming delta updates provide a combined view into incremental item data including output
             // the audio response transcript, function arguments, and audio data.
-            if (update is ConversationItemStreamingPartDeltaUpdate deltaUpdate )
+            if (update is ConversationItemStreamingPartDeltaUpdate deltaUpdate)
             {
                 Console.Write(deltaUpdate.AudioTranscript);
                 Console.Write(deltaUpdate.Text);
@@ -132,6 +163,16 @@ public class Program
                     //await session.StartResponseAsync();
                 }
 
+                //if (itemFinishedUpdate.FunctionName == searchTool.Name)
+                //{
+                //    Console.WriteLine($" <<< Get Agv State tool invoked -- get!");
+                //    string r = DoSearch();
+                //    ConversationItem functionOutputItem = ConversationItem.CreateFunctionCallOutput(itemFinishedUpdate.FunctionCallId, r);
+
+                //    await session.AddItemAsync(functionOutputItem);
+                //    //await session.StartResponseAsync();
+                //}
+
                 if (itemFinishedUpdate.FunctionName == finishConversationTool.Name)
                 {
                     Console.WriteLine($" <<< Finish tool invoked -- ending conversation!");
@@ -151,11 +192,6 @@ public class Program
                     Console.WriteLine($"  -- Ending client turn for pending tool responses");
                     await session.StartResponseAsync();
                 }
-                //else
-                //{
-                //    Console.WriteLine("xxx");
-                //    break;
-                //}
             }
 
             // error commands, as the name implies, are raised when something goes wrong.
@@ -165,12 +201,89 @@ public class Program
                 Console.WriteLine();
                 Console.WriteLine($" <<< ERROR: {errorUpdate.Message}");
                 Console.WriteLine(errorUpdate.GetRawContent().ToString());
-                break;
+                //break;
             }
         }
     }
 
-    private static RealtimeConversationClient GetConfiguredClient()
+    private static void initClient()
+    {
+        realtimeClient = GetRealTimeClient();
+
+        ChatCompletionOptions options = new ChatCompletionOptions();
+        chatClient = GetChatClient();
+    }
+
+    private static RealtimeConversationClient GetRealTimeClient()
+    {
+        //string? aoaiEndpoint = "https://kisoo-m3xuw55t-eastus2.cognitiveservices.azure.com";// "https://kisoo-m3xuw55t-eastus2.openai.azure.com/";// Environment.GetEnvironmentVariable("AZURE_OPENAI_ENDPOINT");
+        string? aoaiEndpoint = "https://kisoo-m3xuw55t-eastus2.openai.azure.com/";// Environment.GetEnvironmentVariable("AZURE_OPENAI_ENDPOINT");
+        string? aoaiDeployment = "gpt-4o-realtime-preview";// Environment.GetEnvironmentVariable("AZURE_OPENAI_DEPLOYMENT");
+        string? aoaiApiKey = "8fCEvgpHLemju8nyMq2SSEIa4mH1ZEpYznBT1RBgTCqj7YVQhvYcJQQJ99AKACHYHv6XJ3w3AAAAACOG4BAa";// Environment.GetEnvironmentVariable("AZURE_OPENAI_API_KEY");
+
+        AzureOpenAIClient aoaiClient = new(new Uri(aoaiEndpoint), new ApiKeyCredential(aoaiApiKey));
+        return aoaiClient.GetRealtimeConversationClient(aoaiDeployment);
+    }
+    private static ChatClient GetChatClient()
+    {
+        //string? aoaiEndpoint = "https://kisoo-m3xuw55t-eastus2.cognitiveservices.azure.com/openai/realtime?api-version=2024-10-01-preview&deployment=gpt-4o-realtime-preview";// Environment.GetEnvironmentVariable("AZURE_OPENAI_ENDPOINT");
+
+        string? aoaiEndpoint = "https://kisoo-m3xuw55t-eastus2.cognitiveservices.azure.com/";// Environment.GetEnvironmentVariable("AZURE_OPENAI_ENDPOINT");
+        string? aoaiDeployment = "gpt-4o";// Environment.GetEnvironmentVariable("AZURE_OPENAI_DEPLOYMENT");
+        string? aoaiApiKey = "8fCEvgpHLemju8nyMq2SSEIa4mH1ZEpYznBT1RBgTCqj7YVQhvYcJQQJ99AKACHYHv6XJ3w3AAAAACOG4BAa";// Environment.GetEnvironmentVariable("AZURE_OPENAI_API_KEY");
+
+
+
+
+
+
+        AzureOpenAIClient aoaiClient = new(new Uri(aoaiEndpoint), new ApiKeyCredential(aoaiApiKey));
+
+        ChatClient _chatClient = aoaiClient.GetChatClient(aoaiDeployment);
+
+
+        return _chatClient;
+    }
+
+    private static string DoSearch(string message)
+    {
+        string? searchEndpoint = "https://ai-search-lab02.search.windows.net";
+        string? searchKey = "ArWRDDWtZWJw7gSAWlnZQVH5paZThIxNlidtCLQSVQAzSeBarm4l";
+        string? searchIndex = "vector-1736395282358";
+
+        ChatCompletionOptions options = new();
+        options.AddDataSource(new AzureSearchChatDataSource()
+        {
+            Endpoint = new Uri(searchEndpoint),
+            IndexName = searchIndex,
+            TopNDocuments = 3,
+            Authentication = DataSourceAuthentication.FromApiKey(searchKey),
+        });
+
+        ChatCompletion completion = chatClient.CompleteChat(
+        new List<ChatMessage>
+        {
+                    new UserChatMessage($"{message}")
+        }, options);
+
+        Console.WriteLine(completion.Content[0].Text);
+
+        ChatMessageContext onYourDataContext = completion.GetMessageContext();
+
+        if (onYourDataContext?.Intent is not null)
+        {
+            Console.WriteLine($"Intent: {onYourDataContext.Intent}");
+        }
+        foreach (ChatCitation citation in onYourDataContext?.Citations ?? [])
+        {
+            Console.WriteLine("------------------------------------------------");
+            //Console.WriteLine($"Citation: RerankScore-{citation.Title}, {citation.Content}");
+            Console.WriteLine($"Citation: {citation.Title}");
+        }
+
+        return completion.Content[0].Text;
+    }
+    private static RealtimeConversationClient GetConfiguredRealTimeClient()
     {
         string? aoaiEndpoint = "https://kisoo-m3xuw55t-eastus2.openai.azure.com/";// Environment.GetEnvironmentVariable("AZURE_OPENAI_ENDPOINT");
         string? aoaiUseEntra = Environment.GetEnvironmentVariable("AZURE_OPENAI_USE_ENTRA");
