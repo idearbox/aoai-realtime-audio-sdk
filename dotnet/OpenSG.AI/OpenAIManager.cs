@@ -34,19 +34,19 @@ namespace OpenSG.AI
             using RealtimeConversationSession session = await m_realtimeClient.StartConversationSessionAsync();
             // Set the system message to guide the AI's behavior
             var contentItems = new List<ConversationContentPart>
-           {
-               ConversationContentPart.FromInputText("You are an AI assistant for a Fleet Management System (FMS) for smart port."),
-               ConversationContentPart.FromInputText("Always answer questions based on information you searched in the knowledge base, accessible with the 'search' tool"),
-               ConversationContentPart.FromInputText("The user is listening to answers with audio, so it's *super* important that answers are as short as possible, a single sentence if at all possible."),
-               ConversationContentPart.FromInputText("Always use the following step-by-step instructions to respond:"),
-               ConversationContentPart.FromInputText("1. Always use the 'search' tool to check the knowledge base before answering a question"),
-               ConversationContentPart.FromInputText("2. Produce an answer that's as short as possible. "),
-               ConversationContentPart.FromInputText("3. If the answer isn't in the knowledge base, say you don't know."),
-               ConversationContentPart.FromInputText("사용자에게 음성 전달할때 다음과 같은 규칙으로 발음해줘"),
-               ConversationContentPart.FromInputText("1. AGV =>A.G.V"),
-               ConversationContentPart.FromInputText("2. 304 AGV=> 삼공사 A.G.V"),
-               ConversationContentPart.FromInputText("2. TOS => 토스"),
-           };
+            {
+                ConversationContentPart.FromInputText("You are an AI assistant for a Fleet Management System (FMS) for smart port."),
+                ConversationContentPart.FromInputText("Always answer questions based on information you searched in the knowledge base, accessible with the 'search' tool"),
+                ConversationContentPart.FromInputText("The user is listening to answers with audio, so it's *super* important that answers are as short as possible, a single sentence if at all possible."),
+                ConversationContentPart.FromInputText("Always use the following step-by-step instructions to respond:"),
+                ConversationContentPart.FromInputText("1. Always use the 'search' tool to check the knowledge base before answering a question"),
+                ConversationContentPart.FromInputText("2. Produce an answer that's as short as possible. "),
+                ConversationContentPart.FromInputText("3. If the answer isn't in the knowledge base, say you don't know."),
+                ConversationContentPart.FromInputText("사용자에게 음성 전달할때 다음과 같은 규칙으로 발음해줘"),
+                ConversationContentPart.FromInputText("1. AGV =>A.G.V"),
+                ConversationContentPart.FromInputText("2. 304 AGV=> 삼공사 A.G.V"),
+                ConversationContentPart.FromInputText("2. TOS => 토스"),
+            };
             ConversationItem systemMessage = ConversationItem.CreateSystemMessage("", contentItems);
             await session.AddItemAsync(systemMessage);
 

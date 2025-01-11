@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using OpenSG.AI;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -19,6 +20,17 @@ namespace RealtimeInteractiveWPFApp
         public MainWindow()
         {
             InitializeComponent();
+        }
+
+        private void btnClose_Click(object sender, RoutedEventArgs e)
+        {
+            Close();
+        }
+
+        private void btnInit_Click(object sender, RoutedEventArgs e)
+        {
+            OpenSGManager agent = new OpenSGManager();
+            _=Task.Run(() => agent.RunAIAgent());
         }
     }
 }

@@ -7,6 +7,12 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
     <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="60"/>
+        </Grid.RowDefinitions>
+        <Button x:Name="btnInit" Content="Init" HorizontalAlignment="Left" Width="100" Height="40" VerticalAlignment="Center" Grid.Row="1" Margin="585,0,0,0" Click="btnInit_Click"/>
+        <Button x:Name="btnClose" Content="Close" HorizontalAlignment="Left" Width="100" Height="40" VerticalAlignment="Center" Grid.Row="1" Margin="690,0,0,0" Click="btnClose_Click"/>
 
     </Grid>
 </Window>
