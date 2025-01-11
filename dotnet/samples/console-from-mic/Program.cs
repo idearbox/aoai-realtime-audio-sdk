@@ -11,13 +11,14 @@ using System.ClientModel.Primitives;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
 using System.Linq;
+using console_with_mic;
 #pragma warning disable OPENAI002
 #pragma warning disable AOAI001 
 
 public class Program
 {
-    private static RealtimeConversationClient realtimeClient;
-    private static ChatClient chatClient;
+    private static RealtimeConversationClient m_realtimeClient;
+    private static ChatClient m_chatClient;
     private static ConversationFunctionTool m_finishConversationTool;
     private static ConversationFunctionTool m_getAGVStateTool;
     private static ConversationFunctionTool m_searchTool;
@@ -29,7 +30,7 @@ public class Program
         // a new conversation session.
         initClient();
 
-        using RealtimeConversationSession session = await realtimeClient.StartConversationSessionAsync();
+        using RealtimeConversationSession session = await m_realtimeClient.StartConversationSessionAsync();
         // Set the system message to guide the AI's behavior
         var contentItems = new List<ConversationContentPart>
            {
@@ -200,7 +201,7 @@ public class Program
                 if (itemFinishedUpdate.FunctionName == m_getAGVStateTool.Name)
                 {
                     Console.WriteLine($" <<< Get Agv State tool invoked -- get!");
-                    string r = GetAGVState();
+                    string r = ToolsManager.GetAGVState();
                     ConversationItem functionOutputItem = ConversationItem.CreateFunctionCallOutput(itemFinishedUpdate.FunctionCallId, r);
 
                     await session.AddItemAsync(functionOutputItem);
@@ -210,7 +211,7 @@ public class Program
                 if (itemFinishedUpdate.FunctionName == m_searchTool.Name)
                 {
                     Console.WriteLine($" <<< **Search tool invoked -- get!");
-                    string r = DoSearch(itemFinishedUpdate.FunctionCallArguments);
+                    string r = ToolsManager.DoSearch(itemFinishedUpdate.FunctionCallArguments, m_chatClient);
                     Console.WriteLine($" <<< **Search result : {r}");
                     ConversationItem functionOutputItem = ConversationItem.CreateFunctionCallOutput(itemFinishedUpdate.FunctionCallId, r);
 
@@ -253,13 +254,13 @@ public class Program
             }
         }
     }
-
+    
     private static void initClient()
     {
-        realtimeClient = GetRealTimeClient();
+        m_realtimeClient = GetRealTimeClient();
 
         ChatCompletionOptions options = new ChatCompletionOptions();
-        chatClient = GetChatClient();
+        m_chatClient = GetChatClient();
     }
 
     private static RealtimeConversationClient GetRealTimeClient()
@@ -292,145 +293,5 @@ public class Program
 
         return _chatClient;
     }
-
-    private static string DoSearch(string message)
-    {
-        Console.WriteLine($" <<< **DoSearch :{message}");
-        string? searchEndpoint = "https://ai-search-lab02.search.windows.net";
-        string? searchKey = "ArWRDDWtZWJw7gSAWlnZQVH5paZThIxNlidtCLQSVQAzSeBarm4l";
-        //string? searchIndex = "vector-1736395282358";
-        string? searchIndex = "vector-1736455121106";
-
-
-        ChatCompletionOptions options = new();
-        options.AddDataSource(new AzureSearchChatDataSource()
-        {
-            Endpoint = new Uri(searchEndpoint),
-            IndexName = searchIndex,
-            TopNDocuments = 10,
-            Authentication = DataSourceAuthentication.FromApiKey(searchKey),
-        });
-
-        ChatCompletion completion = chatClient.CompleteChat(
-        new List<ChatMessage>
-        {
-                    new UserChatMessage($"{message}")
-        }, options);
-
-        Console.WriteLine(completion.Content[0].Text);
-
-        ChatMessageContext onYourDataContext = completion.GetMessageContext();
-
-        if (onYourDataContext?.Intent is not null)
-        {
-            Console.WriteLine($"Intent: {onYourDataContext.Intent}");
-        }
-        foreach (ChatCitation citation in onYourDataContext?.Citations ?? [])
-        {
-            Console.WriteLine("------------------------------------------------");
-            //Console.WriteLine($"Citation: RerankScore-{citation.Title}, {citation.Content}");
-            Console.WriteLine($"Citation: {citation.Title}");
-        }
-
-        return completion.Content[0].Text;
-    }
-    private static RealtimeConversationClient GetConfiguredRealTimeClient()
-    {
-        string? aoaiEndpoint = "https://kisoo-m3xuw55t-eastus2.openai.azure.com/";// Environment.GetEnvironmentVariable("AZURE_OPENAI_ENDPOINT");
-        string? aoaiUseEntra = Environment.GetEnvironmentVariable("AZURE_OPENAI_USE_ENTRA");
-        string? aoaiDeployment = "gpt-4o-realtime-preview";// Environment.GetEnvironmentVariable("AZURE_OPENAI_DEPLOYMENT");
-        string? aoaiApiKey = "8fCEvgpHLemju8nyMq2SSEIa4mH1ZEpYznBT1RBgTCqj7YVQhvYcJQQJ99AKACHYHv6XJ3w3AAAAACOG4BAa";// Environment.GetEnvironmentVariable("AZURE_OPENAI_API_KEY");
-        string? oaiApiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY");
-
-        if (aoaiEndpoint is not null && bool.TryParse(aoaiUseEntra, out bool useEntra) && useEntra)
-        {
-            return GetConfiguredClientForAzureOpenAIWithEntra(aoaiEndpoint, aoaiDeployment);
-        }
-        else if (aoaiEndpoint is not null && aoaiApiKey is not null)
-        {
-            return GetConfiguredClientForAzureOpenAIWithKey(aoaiEndpoint, aoaiDeployment, aoaiApiKey);
-        }
-        else if (aoaiEndpoint is not null)
-        {
-            throw new InvalidOperationException(
-                $"AZURE_OPENAI_ENDPOINT configured without AZURE_OPENAI_USE_ENTRA=true or AZURE_OPENAI_API_KEY.");
-        }
-        else if (oaiApiKey is not null)
-        {
-            return GetConfiguredClientForOpenAIWithKey(oaiApiKey);
-        }
-        else
-        {
-            throw new InvalidOperationException(
-                $"No environment configuration present. Please provide one of:\n"
-                    + " - AZURE_OPENAI_ENDPOINT with AZURE_OPENAI_USE_ENTRA=true or AZURE_OPENAI_API_KEY\n"
-                    + " - OPENAI_API_KEY");
-        }
-    }
-
-    private static RealtimeConversationClient GetConfiguredClientForAzureOpenAIWithEntra(
-        string aoaiEndpoint,
-        string? aoaiDeployment)
-    {
-        Console.WriteLine($" * Connecting to Azure OpenAI endpoint (AZURE_OPENAI_ENDPOINT): {aoaiEndpoint}");
-        Console.WriteLine($" * Using Entra token-based authentication (AZURE_OPENAI_USE_ENTRA)");
-        Console.WriteLine(string.IsNullOrEmpty(aoaiDeployment)
-            ? $" * Using no deployment (AZURE_OPENAI_DEPLOYMENT)"
-            : $" * Using deployment (AZURE_OPENAI_DEPLOYMENT): {aoaiDeployment}");
-
-        AzureOpenAIClient aoaiClient = new(new Uri(aoaiEndpoint), new DefaultAzureCredential());
-        return aoaiClient.GetRealtimeConversationClient(aoaiDeployment);
-    }
-
-    private static RealtimeConversationClient GetConfiguredClientForAzureOpenAIWithKey(
-        string aoaiEndpoint,
-        string? aoaiDeployment,
-        string aoaiApiKey)
-    {
-        Console.WriteLine($" * Connecting to Azure OpenAI endpoint (AZURE_OPENAI_ENDPOINT): {aoaiEndpoint}");
-        Console.WriteLine($" * Using API key (AZURE_OPENAI_API_KEY): {aoaiApiKey[..5]}**");
-        Console.WriteLine(string.IsNullOrEmpty(aoaiDeployment)
-            ? $" * Using no deployment (AZURE_OPENAI_DEPLOYMENT)"
-            : $" * Using deployment (AZURE_OPENAI_DEPLOYMENT): {aoaiDeployment}");
-
-        AzureOpenAIClient aoaiClient = new(new Uri(aoaiEndpoint), new ApiKeyCredential(aoaiApiKey));
-        return aoaiClient.GetRealtimeConversationClient(aoaiDeployment);
-    }
-
-    private static RealtimeConversationClient GetConfiguredClientForOpenAIWithKey(string oaiApiKey)
-    {
-        string oaiEndpoint = "https://api.openai.com/v1";
-        Console.WriteLine($" * Connecting to OpenAI endpoint (OPENAI_ENDPOINT): {oaiEndpoint}");
-        Console.WriteLine($" * Using API key (OPENAI_API_KEY): {oaiApiKey[..5]}**");
-
-        OpenAIClient aoaiClient = new(new ApiKeyCredential(oaiApiKey));
-        return aoaiClient.GetRealtimeConversationClient("gpt-4o-realtime-preview-2024-10-01");
-    }
-
-    public static string GetAGVState()
-    {
-        string result = $@"{{
-                ""agv_total_count"": ""30"",
-                ""agv_id_state_alarm"": ""103,104"",
-                ""agv_id_state_normal"": ""101,102,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127,128,129,130"",
-                ""agv_state_alarm"": [
-                    {{
-                        ""agv_id"": ""103"",
-                        ""agv_state"": ""alarm"",
-                        ""alarm_id"": ""1004"",
-                        ""alarm_description"": ""battery_low""
-                    }},
-                    {{
-                        ""agv_id"": ""104"",
-                        ""agv_state"": ""alarm"",
-                        ""alarm_id"": ""1007"",
-                        ""alarm_description"": ""e_stop""
-                    }}
-                ]
-
-            }}";
-        return result;
-    }
-
 }
 
