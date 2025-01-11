@@ -14,7 +14,7 @@ using System.Linq;
 #pragma warning disable OPENAI002
 #pragma warning disable AOAI001 
 
-namespace console_with_mic
+namespace OpenSG.AI
 {
     public class OpenSGManager
     {

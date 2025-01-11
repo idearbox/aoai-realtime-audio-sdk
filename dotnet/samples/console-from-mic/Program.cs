@@ -11,19 +11,13 @@ using System.ClientModel.Primitives;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
 using System.Linq;
-using console_with_mic;
+using OpenSG.AI;
+
 #pragma warning disable OPENAI002
 #pragma warning disable AOAI001 
 
 public class Program
 {
-    private static RealtimeConversationClient m_realtimeClient;
-    private static ChatClient m_chatClient;
-    private static ConversationFunctionTool m_finishConversationTool;
-    private static ConversationFunctionTool m_getAGVStateTool;
-    private static ConversationFunctionTool m_searchTool;
-    private static SpeakerOutput speakerOutput;
-
     public static async Task Main(string[] args)
     {
         OpenSGManager agent=new OpenSGManager();
