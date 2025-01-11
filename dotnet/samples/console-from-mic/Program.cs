@@ -10,7 +10,7 @@ using System.ClientModel;
 using System.ClientModel.Primitives;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
-
+using System.Linq;
 #pragma warning disable OPENAI002
 #pragma warning disable AOAI001 
 
@@ -18,13 +18,17 @@ public class Program
 {
     private static RealtimeConversationClient realtimeClient;
     private static ChatClient chatClient;
+    private static ConversationFunctionTool m_finishConversationTool;
+    private static ConversationFunctionTool m_getAGVStateTool;
+    private static ConversationFunctionTool m_searchTool;
+    private static SpeakerOutput speakerOutput;
 
     public static async Task Main(string[] args)
     {
         // First, we create a client according to configured environment variables (see end of file) and then start
         // a new conversation session.
         initClient();
-        
+
         using RealtimeConversationSession session = await realtimeClient.StartConversationSessionAsync();
         // Set the system message to guide the AI's behavior
         var contentItems = new List<ConversationContentPart>
@@ -32,7 +36,7 @@ public class Program
                ConversationContentPart.FromInputText("You are an AI assistant for a Fleet Management System (FMS) for smart port."),
                ConversationContentPart.FromInputText("Always answer questions based on information you searched in the knowledge base, accessible with the 'search' tool"),
                ConversationContentPart.FromInputText("The user is listening to answers with audio, so it's *super* important that answers are as short as possible, a single sentence if at all possible."),
-               ConversationContentPart.FromInputText("Always use the following step-by-step instructions to respond:"), 
+               ConversationContentPart.FromInputText("Always use the following step-by-step instructions to respond:"),
                ConversationContentPart.FromInputText("1. Always use the 'search' tool to check the knowledge base before answering a question"),
                ConversationContentPart.FromInputText("2. Produce an answer that's as short as possible. "),
                ConversationContentPart.FromInputText("3. If the answer isn't in the knowledge base, say you don't know."),
@@ -43,24 +47,24 @@ public class Program
            };
         ConversationItem systemMessage = ConversationItem.CreateSystemMessage("", contentItems);
         await session.AddItemAsync(systemMessage);
-        
+
         // We'll add a simple function tool that enables the model to interpret user input to figure out when it
         // might be a good time to stop the interaction.
-        ConversationFunctionTool finishConversationTool = new()
+        m_finishConversationTool = new()
         {
             Name = "user_wants_to_finish_conversation",
             Description = "Invoked when the user says goodbye, expresses being finished, or otherwise seems to want to stop the interaction.",
             Parameters = BinaryData.FromString("{}")
         };
 
-        ConversationFunctionTool getAGVStateTool = new()
+        m_getAGVStateTool = new()
         {
             Name = "user_wants_to_get_agv_state",
             Description = "Invoked when the user ask agv state, or ask agvs have any alarm. the result files are " +
-                            "'agv_total_count' is agv tatol count, " +
-                            "'agv_id_state_alarm' is agv id list which has alarm,  " +
-                            "'agv_id_state_normal' is agv id list which is normal state,  " +
-                            "'agv_state_alarm' is list of  alarm detail info by  agv id, agv state, alarm id, alarm description ",
+                           "'agv_total_count' is agv tatol count, " +
+                           "'agv_id_state_alarm' is agv id list which has alarm,  " +
+                           "'agv_id_state_normal' is agv id list which is normal state,  " +
+                           "'agv_state_alarm' is list of  alarm detail info by  agv id, agv state, alarm id, alarm description ",
 
             Parameters = BinaryData.FromString("{}")
         };
@@ -77,7 +81,7 @@ public class Program
             ""required"": [""query""]
         }";
 
-        ConversationFunctionTool searchTool = new()
+        m_searchTool = new()
         {
             Name = "search",
             Description = "Search the knowledge base, The knowledge base is in English, translate to and from English if needed." +
@@ -92,7 +96,7 @@ public class Program
         {
             Voice = ConversationVoice.Alloy,
             //Tools = { finishConversationTool, getAGVStateTool },
-            Tools = { getAGVStateTool, searchTool },
+            Tools = { m_getAGVStateTool, m_searchTool },
             //InputAudioFormat = ConversationAudioFormat.Pcm16,
             //OutputAudioFormat = ConversationAudioFormat.Pcm16,
 
@@ -103,26 +107,50 @@ public class Program
         });
 
         // For convenience, we'll proactively start playback to the speakers now. Nothing will play until it's enqueued.
-        SpeakerOutput speakerOutput = new();
+        speakerOutput = new();
+
 
         // With the session configured, we start processing commands received from the service.
+        _ = ProcessResponse(session);
+
+        using MicrophoneAudioStream microphoneInput = MicrophoneAudioStream.GetInstance();
+        {
+
+            Console.WriteLine(" >>> Recording Stopped... Press Enter to start record.");
+            Console.ReadLine();
+            Console.WriteLine(" >>> Recording Started... Press Enter to stop record.");
+            Console.WriteLine(" >>> Listening to microphone input");
+
+            microphoneInput.StartRecording();
+            session.SendInputAudio(microphoneInput);
+        }
+        Console.WriteLine("app end...");
+    }
+
+    private static async Task ProcessResponse(RealtimeConversationSession session)
+    {
         await foreach (ConversationUpdate update in session.ReceiveUpdatesAsync())
         {
             // session.created is the very first command on a session and lets us know that connection was successful.
             if (update is ConversationSessionStartedUpdate)
             {
                 Console.WriteLine($" <<< Connected: session started");
-                // This is a good time to start capturing microphone input and sending audio to the service. The
-                // input stream will be chunked and sent asynchronously, so we don't need to await anything in the
-                // processing loop.
-                _ = Task.Run(async () =>
-                {
-                    using MicrophoneAudioStream microphoneInput = MicrophoneAudioStream.Start();
-                    Console.WriteLine($" >>> Listening to microphone input");
-                    Console.WriteLine($" >>> (Just tell the app you're done to finish)");
-                    Console.WriteLine();
-                    await session.SendInputAudioAsync(microphoneInput);
-                });
+
+                ////// This is a good time to start capturing microphone input and sending audio to the service. The
+                ////// input stream will be chunked and sent asynchronously, so we don't need to await anything in the
+                ////// processing loop.
+                ////_ = Task.Run(async () =>
+                ////{
+
+                ////    using MicrophoneAudioStream microphoneInput = MicrophoneAudioStream.GetInstance();
+                ////    microphoneInput.StartRecording();
+                ////    Console.WriteLine($" >>> Listening to microphone input");
+                ////    Console.WriteLine($" >>> (Just tell the app you're done to finish)");
+                ////    Console.WriteLine();
+
+
+                ////    await session.SendInputAudioAsync(microphoneInput);
+                ////});
             }
 
             // input_audio_buffer.speech_started tells us that the beginning of speech was detected in the input audio
@@ -133,7 +161,7 @@ public class Program
                 // Like any good listener, we can use the cue that the user started speaking as a hint that the app
                 // should stop talking. Note that we could also track the playback position and truncate the response
                 // item so that the model doesn't "remember things it didn't say" -- that's not demonstrated here.
-                speakerOutput.ClearPlayback();
+                //speakerOutput.ClearPlayback();
             }
 
             // input_audio_buffer.speech_stopped tells us that the end of speech was detected in the input audio sent
@@ -169,7 +197,7 @@ public class Program
             if (update is ConversationItemStreamingFinishedUpdate itemFinishedUpdate)
             {
                 Console.WriteLine();
-                if (itemFinishedUpdate.FunctionName == getAGVStateTool.Name)
+                if (itemFinishedUpdate.FunctionName == m_getAGVStateTool.Name)
                 {
                     Console.WriteLine($" <<< Get Agv State tool invoked -- get!");
                     string r = GetAGVState();
@@ -179,7 +207,7 @@ public class Program
                     //await session.StartResponseAsync();
                 }
 
-                if (itemFinishedUpdate.FunctionName == searchTool.Name)
+                if (itemFinishedUpdate.FunctionName == m_searchTool.Name)
                 {
                     Console.WriteLine($" <<< **Search tool invoked -- get!");
                     string r = DoSearch(itemFinishedUpdate.FunctionCallArguments);
@@ -190,7 +218,7 @@ public class Program
                     //await session.StartResponseAsync();
                 }
 
-                if (itemFinishedUpdate.FunctionName == finishConversationTool.Name)
+                if (itemFinishedUpdate.FunctionName == m_finishConversationTool.Name)
                 {
                     Console.WriteLine($" <<< Finish tool invoked -- ending conversation!");
                     break;
@@ -208,6 +236,9 @@ public class Program
                 {
                     Console.WriteLine($"  -- Ending client turn for pending tool responses");
                     await session.StartResponseAsync();
+                }
+                else
+                {
                 }
             }
 
@@ -269,7 +300,7 @@ public class Program
         string? searchKey = "ArWRDDWtZWJw7gSAWlnZQVH5paZThIxNlidtCLQSVQAzSeBarm4l";
         //string? searchIndex = "vector-1736395282358";
         string? searchIndex = "vector-1736455121106";
-        
+
 
         ChatCompletionOptions options = new();
         options.AddDataSource(new AzureSearchChatDataSource()

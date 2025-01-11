@@ -42,10 +42,22 @@ public class MicrophoneAudioStream : Stream, IDisposable
                 _bufferWritePos += bytesToCopy;
             }
         };
-        _waveInEvent.StartRecording();
+        //_waveInEvent.StartRecording();
     }
 
-    public static MicrophoneAudioStream Start() => new();
+    public void StartRecording()
+    {
+        _waveInEvent.StartRecording();
+        Console.WriteLine("record started..");
+    }
+
+    public void StopRecording()
+    {
+        _waveInEvent.StopRecording();
+        Console.WriteLine("record stopped..");
+    }
+
+    public static MicrophoneAudioStream GetInstance() => new();
 
     public override bool CanRead => true;
 
