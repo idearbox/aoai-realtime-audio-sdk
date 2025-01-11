@@ -116,7 +116,6 @@ public class Program
 
         using MicrophoneAudioStream microphoneInput = MicrophoneAudioStream.GetInstance();
         {
-
             Console.WriteLine(" >>> Recording Stopped... Press Enter to start record.");
             Console.ReadLine();
             Console.WriteLine(" >>> Recording Started... Press Enter to stop record.");
