@@ -5,14 +5,18 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:RealtimeInteractiveWPFApp"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="MainWindow" Height="450" Width="800" Background="#FFFFF60B">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
             <RowDefinition Height="60"/>
         </Grid.RowDefinitions>
-        <Button x:Name="btnInit" Content="Init" HorizontalAlignment="Left" Width="100" Height="40" VerticalAlignment="Center" Grid.Row="1" Margin="585,0,0,0" Click="btnInit_Click"/>
-        <Button x:Name="btnClose" Content="Close" HorizontalAlignment="Left" Width="100" Height="40" VerticalAlignment="Center" Grid.Row="1" Margin="690,0,0,0" Click="btnClose_Click"/>
-
+        <WindowsFormsHost x:Name="wfUnityHost" Margin="8" Background="White" />
+        <StackPanel Grid.Row="1" Margin="4" Orientation="Horizontal" HorizontalAlignment="Right" >
+            <Button x:Name="btnLog" Content="Load 3D"  Width="100" Height="40" VerticalAlignment="Center" Click="btnLog_Click"  Margin="4,0,0,0"/>
+            <Button x:Name="btnLoad3D" Content="Load 3D"  Width="100" Height="40" VerticalAlignment="Center" Grid.Row="1" Click="btnLoad3D_Click" Margin="4,0,0,0"/>
+            <Button x:Name="btnInit" Content="Init"  Width="100" Height="40" VerticalAlignment="Center" Grid.Row="1" Click="btnInit_Click" Margin="4,0,0,0"/>
+            <Button x:Name="btnClose" Content="Close"  Width="100" Height="40" VerticalAlignment="Center" Grid.Row="1" Click="btnClose_Click" Margin="4,0,0,0"/>
+        </StackPanel>
     </Grid>
 </Window>

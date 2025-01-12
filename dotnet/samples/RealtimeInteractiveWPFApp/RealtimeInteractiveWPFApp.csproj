@@ -6,6 +6,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
+    <PlatformTarget>x86</PlatformTarget>
   </PropertyGroup>
 
   <ItemGroup>
@@ -17,6 +18,16 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\OpenSG.AI\OpenSG.AI.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="referenced_dll\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Ai.Unity">
+      <HintPath>bin\Debug\net9.0-windows\RealtimeInteractiveWPFApp_Data\Plugins\x86\Ai.Unity.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
 </Project>

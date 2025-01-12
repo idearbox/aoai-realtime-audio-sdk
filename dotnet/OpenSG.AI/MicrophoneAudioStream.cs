@@ -45,6 +45,12 @@ namespace OpenSG.AI
                 }
             };
             //_waveInEvent.StartRecording();
+            _waveInEvent.DataAvailable += _waveInEvent_DataAvailable;
+        }
+
+        private void _waveInEvent_DataAvailable(object sender, WaveInEventArgs e)
+        {
+            Console.WriteLine(e.BytesRecorded.ToString());
         }
 
         public void StartRecording()
