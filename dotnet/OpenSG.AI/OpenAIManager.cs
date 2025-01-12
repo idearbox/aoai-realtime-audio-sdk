@@ -28,25 +28,30 @@ namespace OpenSG.AI
         private SpeakerOutput speakerOutput;
         public event EventHandler<string> OnUserMessageReceived;
         public event EventHandler<string> OnAIMessageReceived;
-
+        public MicrophoneAudioStream Mic;
+        RealtimeConversationSession _session;
+        private bool isRecording = false;
         public async Task RunAIAgent()
         {
             // First, we create a client according to configured environment variables (see end of file) and then start
             // a new conversation session.
             initClient();
-
-            string instruction = $"You are an AI assistant for a smart port Fleet Management System (FMS) which developed by OpenSG inc. Smart Port Team." +
-                                  "You are also developed by OpenSG inc. in Korea, and main developers are Song Ki Soo, who are hansome guy, and Han You Jin." +
+            string instruction = $"You are an AI assistant designed to help Fleet Management System (FMS) operators manage and optimize the operations of automated guided vehicles (AGVs) in a smart port.+" +
+                                  "FMS developed by Smart Port Team in OpenSG. " +
+                                  "You were developed by OpenSG Co., Ltd., a company based in South Korea, and your main developers are Song Kisoo and Han Yujin, who created you." +
+                                  "Song Kisoo is very kind, sweet and hansome" +
+                                  "You are knowledgeable in port logistics. Provide actionable insights to improve AGV scheduling, minimize downtime, and ensure smooth terminal operations. " +
                                   "answer questions based on information you searched in the knowledge base as much as passible, " +
                                   "accessible with the 'search' tool. The user is listening to answers with audio, " +
-                                  "so it's *super* important that answers are as short as possible, a single sentence if at all possible." +
-                                  "Always use the following step-by-step instructions to respond: " +
+                                  //"so it's *super* important that answers are as short as possible, a single sentence if at all possible." +
+                                  "Always speak speedy and use the following step-by-step instructions to respond: " +
                                   "1. Always use the 'search' tool to check the knowledge base before answering a question. " +
                                   "2. Produce an answer that's as short as possible. " +
-                                  "3. If the answer isn't in the knowledge base, say you don't know." +
-                                  "사용자에게 음성 전달할때 다음과 같은 규칙으로 발음해줘" +
-                                  "용어에서 AGV는 =>A.G.V, TOS => 토스라고 발음해줘, TOS를 절대로 티오에스 라고 발음하지마" +
-                                  "304 AGV=> 삼공사 A.G.V 라고 발음해줘, 절대로 삼백넷 이라고 발음하지마";
+                                  //"3. If the answer isn't in the knowledge base, say you don't know." +
+                                  "following word should be pronounced as a word in Korean. For example:" +
+                                  "'AGV=>AGV', 'TOS=>토스', 'FMS=>FMS', 'Fleet Management System=>FMS'" +
+                                  "AGV 호기 번호를 발음할 때 일, 이, 삼 같은 한자어 숫자를 사용하세요. 예를 들어, 304라는 숫자는 '삼백사'로 발음하고 텍스트 전달시에는 304로 전달해줘. " +
+                                  "AGV 호기 번호를 발음할 때 일상적인 대화에서 사용하는 '하나, 둘, 셋'을 사용하지마.";
 
             // We'll add a simple function tool that enables the model to interpret user input to figure out when it
             // might be a good time to stop the interaction.
@@ -90,10 +95,10 @@ namespace OpenSG.AI
             };
 
 
-            using RealtimeConversationSession session = await m_realtimeClient.StartConversationSessionAsync();
+            _session = await m_realtimeClient.StartConversationSessionAsync();
             // Now we configure the session using the tool we created along with transcription options that enable input
             // audio transcription with whisper.
-            await session.ConfigureSessionAsync(new ConversationSessionOptions()
+            await _session.ConfigureSessionAsync(new ConversationSessionOptions()
             {
                 Voice = ConversationVoice.Shimmer,
                 Tools = { m_getAGVStateTool, m_searchTool },
@@ -111,17 +116,16 @@ namespace OpenSG.AI
 
 
             // With the session configured, we start processing commands received from the service.
-            _ = ProcessResponse(session);
+            _ = ProcessResponse(_session);
 
-            using MicrophoneAudioStream microphoneInput = MicrophoneAudioStream.GetInstance();
+            using MicrophoneAudioStream _microphoneInput = MicrophoneAudioStream.GetInstance();
             {
+                Mic = _microphoneInput;
                 Console.WriteLine(" >>> Recording Stopped... Press Enter to start record.");
-                Console.ReadLine();
                 Console.WriteLine(" >>> Recording Started... Press Enter to stop record.");
                 Console.WriteLine(" >>> Listening to microphone input");
-                microphoneInput._waveInEvent.DataAvailable += _waveInEvent_DataAvailable;
-                microphoneInput.StartRecording();
-                session.SendInputAudio(microphoneInput);
+                Mic._waveInEvent.DataAvailable += _waveInEvent_DataAvailable;
+                _session.SendInputAudio(Mic);
             }
         }
 
@@ -138,22 +142,6 @@ namespace OpenSG.AI
                 if (update is ConversationSessionStartedUpdate)
                 {
                     Console.WriteLine($" <<< Connected: session started");
-
-                    ////// This is a good time to start capturing microphone input and sending audio to the service. The
-                    ////// input stream will be chunked and sent asynchronously, so we don't need to await anything in the
-                    ////// processing loop.
-                    ////_ = Task.Run(async () =>
-                    ////{
-
-                    ////    using MicrophoneAudioStream microphoneInput = MicrophoneAudioStream.GetInstance();
-                    ////    microphoneInput.StartRecording();
-                    ////    Console.WriteLine($" >>> Listening to microphone input");
-                    ////    Console.WriteLine($" >>> (Just tell the app you're done to finish)");
-                    ////    Console.WriteLine();
-
-
-                    ////    await session.SendInputAudioAsync(microphoneInput);
-                    ////});
                 }
 
                 // input_audio_buffer.speech_started tells us that the beginning of speech was detected in the input audio
@@ -165,6 +153,7 @@ namespace OpenSG.AI
                     // should stop talking. Note that we could also track the playback position and truncate the response
                     // item so that the model doesn't "remember things it didn't say" -- that's not demonstrated here.
                     //speakerOutput.ClearPlayback();
+                    ClearAIVoice();
                 }
 
                 // input_audio_buffer.speech_stopped tells us that the end of speech was detected in the input audio sent
@@ -180,9 +169,17 @@ namespace OpenSG.AI
                 if (update is ConversationInputTranscriptionFinishedUpdate transcriptionFinishedUpdate)
                 {
                     Console.WriteLine($" >>> USER: {transcriptionFinishedUpdate.Transcript}");
-                    if (OnUserMessageReceived != null)
+
+                    if (transcriptionFinishedUpdate.Transcript == null || string.IsNullOrEmpty(transcriptionFinishedUpdate.Transcript.TrimEnd()))
                     {
-                        OnUserMessageReceived.Invoke(this, transcriptionFinishedUpdate.Transcript);
+                        Console.WriteLine("xxx");
+                    }
+                    else
+                    {
+                        if (OnUserMessageReceived != null)
+                        {
+                            OnUserMessageReceived.Invoke(this, transcriptionFinishedUpdate.Transcript);
+                        }
                     }
                 }
 
@@ -194,8 +191,10 @@ namespace OpenSG.AI
                     Console.Write(deltaUpdate.Text);
                     if (OnAIMessageReceived != null)
                         OnAIMessageReceived.Invoke(this, deltaUpdate.AudioTranscript);
+
                     if (deltaUpdate.AudioBytes != null)
                         speakerOutput.EnqueueForPlayback(deltaUpdate.AudioBytes);
+
                     //else
                     //    Console.Write("x");
                 }
@@ -208,23 +207,23 @@ namespace OpenSG.AI
                     Console.WriteLine();
                     if (itemFinishedUpdate.FunctionName == m_getAGVStateTool.Name)
                     {
-                        Console.WriteLine($" <<< Get Agv State tool invoked -- get!");
+                        Console.WriteLine($" <<< **GetAGVState() tool invoked -- get!");
                         string r = ToolsManager.GetAGVState();
                         ConversationItem functionOutputItem = ConversationItem.CreateFunctionCallOutput(itemFinishedUpdate.FunctionCallId, r);
 
                         await session.AddItemAsync(functionOutputItem);
-                        //await session.StartResponseAsync();
+                        await session.StartResponseAsync();
                     }
 
                     if (itemFinishedUpdate.FunctionName == m_searchTool.Name)
                     {
-                        Console.WriteLine($" <<< **Search tool invoked -- get!");
+                        Console.WriteLine($" <<< **DoSearch() tool invoked -- get!");
                         string r = ToolsManager.DoSearch(itemFinishedUpdate.FunctionCallArguments, m_chatClient);
                         Console.WriteLine($" <<< **Search result : {r}");
                         ConversationItem functionOutputItem = ConversationItem.CreateFunctionCallOutput(itemFinishedUpdate.FunctionCallId, r);
 
                         await session.AddItemAsync(functionOutputItem);
-                        //await session.StartResponseAsync();
+                        await session.StartResponseAsync();
                     }
 
                     if (itemFinishedUpdate.FunctionName == m_finishConversationTool.Name)
@@ -238,17 +237,18 @@ namespace OpenSG.AI
                 {
                     Console.WriteLine($"  -- Model turn generation finished. Status: {turnFinishedUpdate.Status}");
 
-                    // Here, if we processed tool calls in the course of the model turn, we finish the
-                    // client turn to resume model generation. The next model turn will reflect the tool
-                    // responses that were already provided.
-                    if (turnFinishedUpdate.CreatedItems.Any(item => item.FunctionName?.Length > 0))
-                    {
-                        Console.WriteLine($"  -- Ending client turn for pending tool responses");
-                        await session.StartResponseAsync();
-                    }
-                    else
-                    {
-                    }
+                    ////// Here, if we processed tool calls in the course of the model turn, we finish the
+                    ////// client turn to resume model generation. The next model turn will reflect the tool
+                    ////// responses that were already provided.
+                    ////if (turnFinishedUpdate.CreatedItems.Any(item => item.FunctionName?.Length > 0))
+                    ////{
+                    ////    Console.WriteLine($"  -- Ending client turn for pending tool responses");
+                    ////    await session.StartResponseAsync();
+                    ////    //_ = session.StartResponseAsync();
+                    ////}
+                    ////else
+                    ////{
+                    ////}
                 }
 
                 // error commands, as the name implies, are raised when something goes wrong.
@@ -273,21 +273,18 @@ namespace OpenSG.AI
 
         private RealtimeConversationClient GetRealTimeClient()
         {
-            //string? aoaiEndpoint = "https://kisoo-m3xuw55t-eastus2.cognitiveservices.azure.com";// "https://kisoo-m3xuw55t-eastus2.openai.azure.com/";// Environment.GetEnvironmentVariable("AZURE_OPENAI_ENDPOINT");
-            string? aoaiEndpoint = "https://kisoo-m3xuw55t-eastus2.openai.azure.com/";// Environment.GetEnvironmentVariable("AZURE_OPENAI_ENDPOINT");
-            string? aoaiDeployment = "gpt-4o-realtime-preview";// Environment.GetEnvironmentVariable("AZURE_OPENAI_DEPLOYMENT");
-            string? aoaiApiKey = "8fCEvgpHLemju8nyMq2SSEIa4mH1ZEpYznBT1RBgTCqj7YVQhvYcJQQJ99AKACHYHv6XJ3w3AAAAACOG4BAa";// Environment.GetEnvironmentVariable("AZURE_OPENAI_API_KEY");
+            string? aoaiEndpoint = "https://kisoo-m3xuw55t-eastus2.openai.azure.com/";// 
+            string? aoaiDeployment = "gpt-4o-realtime-preview";
+            string? aoaiApiKey = Environment.GetEnvironmentVariable("AZURE_OPENAI_API_KEY1");
 
             AzureOpenAIClient aoaiClient = new(new Uri(aoaiEndpoint), new ApiKeyCredential(aoaiApiKey));
             return aoaiClient.GetRealtimeConversationClient(aoaiDeployment);
         }
         private ChatClient GetChatClient()
         {
-            //string? aoaiEndpoint = "https://kisoo-m3xuw55t-eastus2.cognitiveservices.azure.com/openai/realtime?api-version=2024-10-01-preview&deployment=gpt-4o-realtime-preview";// Environment.GetEnvironmentVariable("AZURE_OPENAI_ENDPOINT");
-
-            string? aoaiEndpoint = "https://kisoo-m3xuw55t-eastus2.cognitiveservices.azure.com/";// Environment.GetEnvironmentVariable("AZURE_OPENAI_ENDPOINT");
-            string? aoaiDeployment = "gpt-4o";// Environment.GetEnvironmentVariable("AZURE_OPENAI_DEPLOYMENT");
-            string? aoaiApiKey = "8fCEvgpHLemju8nyMq2SSEIa4mH1ZEpYznBT1RBgTCqj7YVQhvYcJQQJ99AKACHYHv6XJ3w3AAAAACOG4BAa";// Environment.GetEnvironmentVariable("AZURE_OPENAI_API_KEY");
+            string? aoaiEndpoint = "https://kisoo-m3xuw55t-eastus2.cognitiveservices.azure.com/";
+            string? aoaiDeployment = "gpt-4o";
+            string? aoaiApiKey = Environment.GetEnvironmentVariable("AZURE_OPENAI_API_KEY1");
 
 
 
@@ -300,6 +297,28 @@ namespace OpenSG.AI
 
 
             return _chatClient;
+        }
+
+        public void ClearAIVoice()
+        {
+            speakerOutput.ClearPlayback();
+            //_session.ClearInputAudio();
+            _session.CancelResponse();
+            _session.InterruptResponse();
+            Console.WriteLine("ClearAIVoice()..");
+        }
+
+        public void StartRecording()
+        {
+            Mic.StartRecording();
+            isRecording = true;
+
+        }
+
+        public void StopRecording()
+        {
+            Mic.StopRecording();
+            isRecording = false;
         }
     }
 }

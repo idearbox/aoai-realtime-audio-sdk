@@ -56,9 +56,9 @@ namespace RealtimeInteractiveWPFApp
             aiAgent.OnAIMessageReceived += AiAgent_OnAiMessageReceived;
         }
 
-        private void AiAgent_OnUserMessageReceived(object? sender, string e)
+        private async void AiAgent_OnUserMessageReceived(object? sender, string e)
         {
-            Dispatcher.Invoke(DispatcherPriority.Normal, new Action(() =>
+            _ = Dispatcher.InvokeAsync(new Action(() =>
             {
                 if (tkChat.LastMessage == null || tkChat.LastMessage.Message.Author != currentAuthor)
                 {
@@ -71,27 +71,27 @@ namespace RealtimeInteractiveWPFApp
                     {
                         tm.Text += e;
                     }
-                }                
-            }));
+                }
+            }), DispatcherPriority.Normal);
         }
 
-        private void AiAgent_OnAiMessageReceived(object? sender, string e)
+        private async void AiAgent_OnAiMessageReceived(object? sender, string e)
         {
-            Dispatcher.Invoke(DispatcherPriority.Normal, new Action(() =>
-            {
-                if ( tkChat.LastMessage == null || tkChat.LastMessage.Message.Author!= aiAuthor)
-                {
-                    tkChat.AddMessage(aiAuthor, e);
-                }
-                else
-                {
-                    TextMessage? tm = tkChat.LastMessage?.Message as TextMessage;
-                    if (tm != null && tm.Author == aiAuthor)
-                    {
-                        tm.Text += e;
-                    }
-                }
-            }));            
+            _ = Dispatcher.InvokeAsync(new Action(() =>
+             {
+                 if (tkChat.LastMessage == null || tkChat.LastMessage.Message.Author != aiAuthor)
+                 {
+                     tkChat.AddMessage(aiAuthor, e);
+                 }
+                 else
+                 {
+                     TextMessage? tm = tkChat.LastMessage?.Message as TextMessage;
+                     if (tm != null && tm.Author == aiAuthor)
+                     {
+                         tm.Text += e;
+                     }
+                 }
+             }), DispatcherPriority.Normal);
         }
 
         private void btnLoad3D_Click(object sender, RoutedEventArgs e)
@@ -124,5 +124,24 @@ namespace RealtimeInteractiveWPFApp
             }
             Console.WriteLine("222...StartUnityAsync");
         }
+
+        private void radToggleButton_Checked(object sender, RoutedEventArgs e)
+        {
+            if (aiAgent == null || aiAgent.Mic == null)
+                return;
+            aiAgent.StartRecording();
+
+            radToggleButton.Background = Brushes.Green;
+        }
+
+        private void radToggleButton_Unchecked(object sender, RoutedEventArgs e)
+        {
+            if (aiAgent == null || aiAgent.Mic == null)
+                return;
+            aiAgent.StopRecording();
+            radToggleButton.Background = Brushes.Gray;
+        }
+
+
     }
 }

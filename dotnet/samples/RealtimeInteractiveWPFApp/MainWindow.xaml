@@ -7,14 +7,15 @@
         xmlns:telerik="http://schemas.telerik.com/2008/xaml/presentation" x:Class="RealtimeInteractiveWPFApp.MainWindow"
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800" Background="#FFFFF60B">
-    <Grid>
+    <Grid Background="Black">
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
             <RowDefinition Height="60"/>
         </Grid.RowDefinitions>
 
-        <telerik:RadChat x:Name="tkChat" Margin="8" InputBoxText="" telerik:StyleManager.Theme="Green" />
+        <telerik:RadChat x:Name="tkChat" Margin="8" InputBoxText="" telerik:StyleManager.Theme="Green" Background="#FF313131" />
         <StackPanel Grid.Row="1" Margin="4" Orientation="Horizontal" HorizontalAlignment="Right" >
+            <telerik:RadToggleButton x:Name="radToggleButton" Content="Voice Command" Height="40" IsChecked="False" IsThreeState="False" Width="120" Margin="4,0,0,0" Unchecked="radToggleButton_Unchecked" Checked="radToggleButton_Checked"/>
             <Button x:Name="btnLog" Content="log"  Width="100" Height="40" VerticalAlignment="Center" Click="btnLog_Click"  Margin="4,0,0,0"/>
             <Button x:Name="btnLoad3D" Content="Load 3D"  Width="100" Height="40" VerticalAlignment="Center" Grid.Row="1" Click="btnLoad3D_Click" Margin="4,0,0,0"/>
             <Button x:Name="btnInit" Content="Init"  Width="100" Height="40" VerticalAlignment="Center" Grid.Row="1" Click="btnInit_Click" Margin="4,0,0,0"/>

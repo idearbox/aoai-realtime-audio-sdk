@@ -15,9 +15,10 @@ namespace OpenSG.AI
         public static string DoSearch(string message, ChatClient chatClient)
         {
             string? aaiSearchEndpoint = "https://ai-search-lab02.search.windows.net";
-            string? aaiSearchKey = "ArWRDDWtZWJw7gSAWlnZQVH5paZThIxNlidtCLQSVQAzSeBarm4l";
+            string? aaiSearchKey = Environment.GetEnvironmentVariable("AZURE_AI_SEARCH_KEY1");
             //string? searchIndex = "vector-1736395282358";
-            string? aaiSearchIndex = "vector-1736455121106";
+            //string? aaiSearchIndex = "vector-1736455121106";
+            string? aaiSearchIndex = "vector-1736682252392-v3";
 
             Console.WriteLine($" <<< **DoSearch :{message}");
             ChatCompletionOptions options = new();
@@ -25,7 +26,7 @@ namespace OpenSG.AI
             {
                 Endpoint = new Uri(aaiSearchEndpoint),
                 IndexName = aaiSearchIndex,
-                TopNDocuments = 10,
+                TopNDocuments = 50,
                 Authentication = DataSourceAuthentication.FromApiKey(aaiSearchKey),
             });
 
