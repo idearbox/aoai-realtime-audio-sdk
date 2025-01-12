@@ -24,6 +24,8 @@ namespace OpenSG.AI
         private ConversationFunctionTool m_getAGVStateTool;
         private ConversationFunctionTool m_searchTool;
         private SpeakerOutput speakerOutput;
+        public event EventHandler<string> OnUserMessageReceived;
+        public event EventHandler<string> OnAIMessageReceived;
 
         public async Task RunAIAgent()
         {
@@ -121,12 +123,16 @@ namespace OpenSG.AI
                 Console.ReadLine();
                 Console.WriteLine(" >>> Recording Started... Press Enter to stop record.");
                 Console.WriteLine(" >>> Listening to microphone input");
-
+                microphoneInput._waveInEvent.DataAvailable += _waveInEvent_DataAvailable;
                 microphoneInput.StartRecording();
                 session.SendInputAudio(microphoneInput);
             }
         }
 
+        private void _waveInEvent_DataAvailable(object? sender, NAudio.Wave.WaveInEventArgs e)
+        {
+
+        }
 
         private async Task ProcessResponse(RealtimeConversationSession session)
         {
@@ -178,6 +184,10 @@ namespace OpenSG.AI
                 if (update is ConversationInputTranscriptionFinishedUpdate transcriptionFinishedUpdate)
                 {
                     Console.WriteLine($" >>> USER: {transcriptionFinishedUpdate.Transcript}");
+                    if (OnUserMessageReceived != null)
+                    {
+                        OnUserMessageReceived.Invoke(this, transcriptionFinishedUpdate.Transcript);
+                    }
                 }
 
                 // Item streaming delta updates provide a combined view into incremental item data including output
@@ -186,6 +196,8 @@ namespace OpenSG.AI
                 {
                     Console.Write(deltaUpdate.AudioTranscript);
                     Console.Write(deltaUpdate.Text);
+                    if (OnAIMessageReceived != null)
+                        OnAIMessageReceived.Invoke(this, deltaUpdate.AudioTranscript);
                     if (deltaUpdate.AudioBytes != null)
                         speakerOutput.EnqueueForPlayback(deltaUpdate.AudioBytes);
                     //else

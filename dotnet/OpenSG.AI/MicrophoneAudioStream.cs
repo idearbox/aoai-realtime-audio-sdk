@@ -20,7 +20,7 @@ namespace OpenSG.AI
         private int _bufferReadPos = 0;
         private int _bufferWritePos = 0;
 
-        private readonly WaveInEvent _waveInEvent;
+        public readonly WaveInEvent _waveInEvent;
 
         private MicrophoneAudioStream()
         {
@@ -45,13 +45,8 @@ namespace OpenSG.AI
                 }
             };
             //_waveInEvent.StartRecording();
-            _waveInEvent.DataAvailable += _waveInEvent_DataAvailable;
-        }
-
-        private void _waveInEvent_DataAvailable(object sender, WaveInEventArgs e)
-        {
-            Console.WriteLine(e.BytesRecorded.ToString());
-        }
+            
+        }        
 
         public void StartRecording()
         {

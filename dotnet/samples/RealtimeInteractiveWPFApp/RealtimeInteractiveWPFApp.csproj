@@ -7,6 +7,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <PlatformTarget>x86</PlatformTarget>
+    <AssemblyName>OpenSG.AI.Visual</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>
@@ -14,6 +15,7 @@
     <PackageReference Include="Azure.Identity" Version="1.13.1" />
     <PackageReference Include="NAudio" Version="2.2.1" />
     <PackageReference Include="OpenAI" Version="2.1.0-beta.2" />
+    <PackageReference Include="telerik.ui.for.wpf.netcore.xaml" Version="2023.1.315" />
   </ItemGroup>
 
   <ItemGroup>
@@ -28,6 +30,21 @@
     <Reference Include="Ai.Unity">
       <HintPath>bin\Debug\net9.0-windows\RealtimeInteractiveWPFApp_Data\Plugins\x86\Ai.Unity.dll</HintPath>
     </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Properties\Settings.Designer.cs">
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
   </ItemGroup>
 
 </Project>
