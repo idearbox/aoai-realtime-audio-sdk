@@ -142,6 +142,9 @@ namespace RealtimeInteractiveWPFApp
             radToggleButton.Background = Brushes.Gray;
         }
 
-
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            this.Height = 50 + 50;
+        }
     }
 }
