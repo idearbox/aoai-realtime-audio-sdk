@@ -11,6 +11,8 @@ using System.ClientModel.Primitives;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
 using System.Linq;
+using NAudio.CoreAudioApi;
+using System.Runtime.Intrinsics.X86;
 #pragma warning disable OPENAI002
 #pragma warning disable AOAI001 
 
@@ -33,24 +35,18 @@ namespace OpenSG.AI
             // a new conversation session.
             initClient();
 
-            using RealtimeConversationSession session = await m_realtimeClient.StartConversationSessionAsync();
-            // Set the system message to guide the AI's behavior
-            var contentItems = new List<ConversationContentPart>
-            {
-                ConversationContentPart.FromInputText("You are an AI assistant for a Fleet Management System (FMS) for smart port."),
-                ConversationContentPart.FromInputText("Always answer questions based on information you searched in the knowledge base, accessible with the 'search' tool"),
-                ConversationContentPart.FromInputText("The user is listening to answers with audio, so it's *super* important that answers are as short as possible, a single sentence if at all possible."),
-                ConversationContentPart.FromInputText("Always use the following step-by-step instructions to respond:"),
-                ConversationContentPart.FromInputText("1. Always use the 'search' tool to check the knowledge base before answering a question"),
-                ConversationContentPart.FromInputText("2. Produce an answer that's as short as possible. "),
-                ConversationContentPart.FromInputText("3. If the answer isn't in the knowledge base, say you don't know."),
-                ConversationContentPart.FromInputText("사용자에게 음성 전달할때 다음과 같은 규칙으로 발음해줘"),
-                ConversationContentPart.FromInputText("1. AGV =>A.G.V"),
-                ConversationContentPart.FromInputText("2. 304 AGV=> 삼공사 A.G.V"),
-                ConversationContentPart.FromInputText("2. TOS => 토스"),
-            };
-            ConversationItem systemMessage = ConversationItem.CreateSystemMessage("", contentItems);
-            await session.AddItemAsync(systemMessage);
+            string instruction = $"You are an AI assistant for a smart port Fleet Management System (FMS) which developed by OpenSG inc. Smart Port Team." +
+                                  "You are also developed by OpenSG inc. in Korea, and main developers are Song Ki Soo, who are hansome guy, and Han You Jin." +
+                                  "answer questions based on information you searched in the knowledge base as much as passible, " +
+                                  "accessible with the 'search' tool. The user is listening to answers with audio, " +
+                                  "so it's *super* important that answers are as short as possible, a single sentence if at all possible." +
+                                  "Always use the following step-by-step instructions to respond: " +
+                                  "1. Always use the 'search' tool to check the knowledge base before answering a question. " +
+                                  "2. Produce an answer that's as short as possible. " +
+                                  "3. If the answer isn't in the knowledge base, say you don't know." +
+                                  "사용자에게 음성 전달할때 다음과 같은 규칙으로 발음해줘" +
+                                  "용어에서 AGV는 =>A.G.V, TOS => 토스라고 발음해줘, TOS를 절대로 티오에스 라고 발음하지마" +
+                                  "304 AGV=> 삼공사 A.G.V 라고 발음해줘, 절대로 삼백넷 이라고 발음하지마";
 
             // We'll add a simple function tool that enables the model to interpret user input to figure out when it
             // might be a good time to stop the interaction.
@@ -94,16 +90,16 @@ namespace OpenSG.AI
             };
 
 
+            using RealtimeConversationSession session = await m_realtimeClient.StartConversationSessionAsync();
             // Now we configure the session using the tool we created along with transcription options that enable input
             // audio transcription with whisper.
             await session.ConfigureSessionAsync(new ConversationSessionOptions()
             {
-                Voice = ConversationVoice.Alloy,
-                //Tools = { finishConversationTool, getAGVStateTool },
+                Voice = ConversationVoice.Shimmer,
                 Tools = { m_getAGVStateTool, m_searchTool },
-                //InputAudioFormat = ConversationAudioFormat.Pcm16,
-                //OutputAudioFormat = ConversationAudioFormat.Pcm16,
-
+                InputAudioFormat = ConversationAudioFormat.Pcm16,
+                OutputAudioFormat = ConversationAudioFormat.Pcm16,
+                Instructions = instruction,
                 InputTranscriptionOptions = new()
                 {
                     Model = "whisper-1",
