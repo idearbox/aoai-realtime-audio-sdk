@@ -11,6 +11,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="referenced_dll\**" />
+    <EmbeddedResource Remove="referenced_dll\**" />
+    <None Remove="referenced_dll\**" />
+    <Page Remove="referenced_dll\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Azure.AI.OpenAI" Version="2.1.0-beta.2" />
     <PackageReference Include="Azure.Identity" Version="1.13.1" />
     <PackageReference Include="NAudio" Version="2.2.1" />
@@ -20,10 +27,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\OpenSG.AI\OpenSG.AI.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="referenced_dll\" />
   </ItemGroup>
 
   <ItemGroup>
