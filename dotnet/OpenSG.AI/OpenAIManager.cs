@@ -301,15 +301,8 @@ namespace OpenSG.AI
             string? aoaiDeployment = "gpt-4o";
             string? aoaiApiKey = Environment.GetEnvironmentVariable("AZURE_OPENAI_API_KEY1");
 
-
-
-
-
-
             AzureOpenAIClient aoaiClient = new(new Uri(aoaiEndpoint), new ApiKeyCredential(aoaiApiKey));
-
             ChatClient _chatClient = aoaiClient.GetChatClient(aoaiDeployment);
-
 
             return _chatClient;
         }
