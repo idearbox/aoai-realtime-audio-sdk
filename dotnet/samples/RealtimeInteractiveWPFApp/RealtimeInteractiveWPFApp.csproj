@@ -26,7 +26,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\OpenSG.AI\OpenSG.AI.csproj" />
+    <ProjectReference Include="..\OpenSG.AI\OpenSG.AI.csproj" />
   </ItemGroup>
 
   <ItemGroup>
