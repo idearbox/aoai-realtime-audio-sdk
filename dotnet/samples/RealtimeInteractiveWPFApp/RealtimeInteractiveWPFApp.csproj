@@ -44,4 +44,17 @@
     </None>
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="referencedDLL\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="CSAudioVisualization">
+      <HintPath>referencedDLL\CSAudioVisualization.dll</HintPath>
+    </Reference>
+    <Reference Include="CSCore">
+      <HintPath>referencedDLL\CSCore.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
 </Project>

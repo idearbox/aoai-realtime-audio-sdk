@@ -28,6 +28,8 @@ namespace OpenSG.AI
         private SpeakerOutput speakerOutput;
         public event EventHandler<string> OnUserMessageReceived;
         public event EventHandler<string> OnAIMessageReceived;
+        public event EventHandler<string> OnUserSpeechFinished;
+        public event EventHandler<string> OnAIToolExecuted;
         public MicrophoneAudioStream Mic;
         RealtimeConversationSession _session;
         private bool isRecording = false;
@@ -61,12 +63,15 @@ namespace OpenSG.AI
                                  "송기수는 매우 친절하고, 다정하며, 잘생긴 사람이다." +
                                  "너는 항만 물류에 대한 전문 지식을 가지고 있어. AGV 스케줄링을 개선하고, 다운타임을 최소화하며, 터미널 운영이 원활하게 이루어지도록 실질적인 인사이트를 제공해." +
                                  "지식 베이스에서 검색한 정보를 최대한 활용하여 질문에 답변해. 사용자는 답변을 음성으로 듣고 있으니, " +
-                                 "항상 답변은 빠르게 발음하고 가능한 한 짧게, 단문으로 대답해." +
+                                 //"항상 답변은 빠르게 발음하고 가능한 한 짧게, 단문으로 대답해." +
+                                 "항상 답변은 빠르게 발음해(speak fast)." +
                                  "다음 단계별 지침을 따르면서 응답해줘: " +
                                  "1. 질문에 답하기 전에 항상 'search' 도구를 사용해 지식 베이스를 확인해." +
                                  "2. 가능한 한 짧고 간결한 답변을 만들어." +
-                                 "다음 단어는 한국어 발음으로 말해야 해. 예를 들어: " +
+                                 "다음 단어의 발음은 아래와 같이 해줘" +
                                  "'AGV=>에이쥐브이', 'TOS=>토스', 'FMS=>에프엠에스', 'Fleet Management System=>FMS'." +
+                                 "다음 단어의 텍스트 전달시에는 아래와 같이 해줘" +
+                                 "'AGV=>AGV', 'TOS=>TOS', 'FMS=>FMS', 'Fleet Management System=>FMS'." +
                                  "AGV 호기 번호를 발음할 때는 '일, 이, 삼' 같은 한자어 숫자를 사용해. 예를 들어, 304라는 숫자는 '삼백사'로 발음하고, 텍스트로 전달할 때는 304로 전달해줘." +
                                  "일상적인 대화에서 사용하는 '하나, 둘, 셋' 같은 표현은 사용하지 마.";
 
@@ -179,6 +184,8 @@ namespace OpenSG.AI
                 if (update is ConversationInputSpeechFinishedUpdate speechFinishedUpdate)
                 {
                     Console.WriteLine($" <<< End of speech detected @ {speechFinishedUpdate.AudioEndTime}");
+                    if (OnUserSpeechFinished != null)
+                        OnUserSpeechFinished.Invoke(this, "End of speech detected");
                 }
 
                 // conversation.item.input_audio_transcription.completed will only arrive if input transcription was
@@ -223,10 +230,16 @@ namespace OpenSG.AI
                 if (update is ConversationItemStreamingFinishedUpdate itemFinishedUpdate)
                 {
                     Console.WriteLine();
+                    if (!string.IsNullOrEmpty(itemFinishedUpdate.FunctionName))
+                    {
+                        if (OnAIToolExecuted != null)
+                            OnAIToolExecuted.Invoke(this, itemFinishedUpdate.FunctionName);
+                    }
                     if (itemFinishedUpdate.FunctionName == m_getAGVStateTool.Name)
                     {
                         Console.WriteLine($" <<< **GetAGVState() tool invoked -- get!");
                         string r = ToolsManager.GetAGVState();
+                        Console.WriteLine($" <<< **ToolsManager.GetAGVState():{r}");
                         ConversationItem functionOutputItem = ConversationItem.CreateFunctionCallOutput(itemFinishedUpdate.FunctionCallId, r);
 
                         await session.AddItemAsync(functionOutputItem);
