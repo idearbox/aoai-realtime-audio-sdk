@@ -257,6 +257,9 @@ namespace RealtimeInteractiveWPFApp
         {
             //SetMessage("hello from WPF->unity");
             Console.WriteLine("222");
+            string s=ToolsManager.DoSearch2("searchOpenSGDocument", textBox1.Text, aiAgent.chatClient);
+            //string s = ToolsManager.DoSearch2("searchDGTDocument", textBox1.Text, aiAgent.chatClient);
+            Console.WriteLine( $"xxx:{s}");
         }
 
         private void radToggleButton_Checked(object sender, RoutedEventArgs e)

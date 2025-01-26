@@ -19,7 +19,7 @@ namespace OpenSG.AI
                 channels: 1);
             _waveProvider = new(outputAudioFormat)
             {
-                BufferDuration = TimeSpan.FromMinutes(2),
+                BufferDuration = TimeSpan.FromMinutes(4),
             };
             _waveOutEvent = new();
             _waveOutEvent.Init(_waveProvider);
