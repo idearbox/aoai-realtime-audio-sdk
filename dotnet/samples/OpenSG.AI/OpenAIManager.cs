@@ -26,10 +26,8 @@ namespace OpenSG.AI
         private ConversationFunctionTool m_getAGVStateTool;
         private ConversationFunctionTool m_searchTool;
         private SpeakerOutput speakerOutput;
-        public event EventHandler<string> OnUserMessageReceived;
-        public event EventHandler<string> OnAIMessageReceived;
-        public event EventHandler<string> OnUserSpeechFinished;
-        public event EventHandler<string> OnAIToolExecuted;
+        public event EventHandler<ConversationInputTranscriptionFinishedUpdate> OnUserMessageReceived;
+        public event EventHandler<ConversationItemStreamingPartDeltaUpdate> OnAIMessageReceived;
         public MicrophoneAudioStream Mic;
         RealtimeConversationSession _session;
         private bool isRecording = false;
@@ -38,7 +36,6 @@ namespace OpenSG.AI
             // First, we create a client according to configured environment variables (see end of file) and then start
             // a new conversation session.
             initClient();
-            #region old..
             //string instruction = $"You are an AI assistant designed to help Fleet Management System (FMS) operators manage and optimize the operations of automated guided vehicles (AGVs) in a smart port.+" +
             //                      "FMS developed by Smart Port Team in OpenSG. " +
             //                      "You were developed by OpenSG Co., Ltd., a company based in South Korea, and your main developers are Song Kisoo and Han Yujin, who created you." +
@@ -55,23 +52,18 @@ namespace OpenSG.AI
             //                      "'AGV=>AGV', 'TOS=>토스', 'FMS=>FMS', 'Fleet Management System=>FMS'" +
             //                      "AGV 호기 번호를 발음할 때 일, 이, 삼 같은 한자어 숫자를 사용하세요. 예를 들어, 304라는 숫자는 '삼백사'로 발음하고 텍스트 전달시에는 304로 전달해줘. " +
             //                      "AGV 호기 번호를 발음할 때 일상적인 대화에서 사용하는 '하나, 둘, 셋'을 사용하지마.";
-            #endregion            
-
             string instruction = $"너는 스마트 항만에서 자동화된 AGV(무인 운송 차량)의 운영을 관리하고 최적화하는 데 도움을 주기 위해 개발된 FMS(Fleet Management System)의 운영자를 위한 AI 어시스턴트야. " +
-            "FMS는 주식회사 OpenSG의 스마트 항만 팀에서 개발했어. " +
+                                 "FMS는 주식회사 OpenSG의 스마트 항만 팀에서 개발했어. " +
                                  "너는 한국에 본사를 둔 OpenSG 주식회사에서 개발되었으며, 주요 개발자는 송기수와 한유진이야." +
                                  "송기수는 매우 친절하고, 다정하며, 잘생긴 사람이다." +
                                  "너는 항만 물류에 대한 전문 지식을 가지고 있어. AGV 스케줄링을 개선하고, 다운타임을 최소화하며, 터미널 운영이 원활하게 이루어지도록 실질적인 인사이트를 제공해." +
                                  "지식 베이스에서 검색한 정보를 최대한 활용하여 질문에 답변해. 사용자는 답변을 음성으로 듣고 있으니, " +
-                                 //"항상 답변은 빠르게 발음하고 가능한 한 짧게, 단문으로 대답해." +
-                                 "항상 답변은 빠르게 발음해(speak fast)." +
+                                 "항상 답변은 빠르게 발음하고 가능한 한 짧게, 단문으로 대답해." +
                                  "다음 단계별 지침을 따르면서 응답해줘: " +
                                  "1. 질문에 답하기 전에 항상 'search' 도구를 사용해 지식 베이스를 확인해." +
                                  "2. 가능한 한 짧고 간결한 답변을 만들어." +
-                                 "다음 단어의 발음은 아래와 같이 해줘" +
+                                 "다음 단어는 한국어 발음으로 말해야 해. 예를 들어: " +
                                  "'AGV=>에이쥐브이', 'TOS=>토스', 'FMS=>에프엠에스', 'Fleet Management System=>FMS'." +
-                                 "다음 단어의 텍스트 전달시에는 아래와 같이 해줘" +
-                                 "'AGV=>AGV', 'TOS=>TOS', 'FMS=>FMS', 'Fleet Management System=>FMS'." +
                                  "AGV 호기 번호를 발음할 때는 '일, 이, 삼' 같은 한자어 숫자를 사용해. 예를 들어, 304라는 숫자는 '삼백사'로 발음하고, 텍스트로 전달할 때는 304로 전달해줘." +
                                  "일상적인 대화에서 사용하는 '하나, 둘, 셋' 같은 표현은 사용하지 마.";
 
@@ -184,8 +176,6 @@ namespace OpenSG.AI
                 if (update is ConversationInputSpeechFinishedUpdate speechFinishedUpdate)
                 {
                     Console.WriteLine($" <<< End of speech detected @ {speechFinishedUpdate.AudioEndTime}");
-                    if (OnUserSpeechFinished != null)
-                        OnUserSpeechFinished.Invoke(this, "End of speech detected");
                 }
 
                 // conversation.item.input_audio_transcription.completed will only arrive if input transcription was
@@ -203,7 +193,7 @@ namespace OpenSG.AI
                     {
                         if (OnUserMessageReceived != null)
                         {
-                            OnUserMessageReceived.Invoke(this, transcriptionFinishedUpdate.Transcript);
+                            OnUserMessageReceived.Invoke(this, transcriptionFinishedUpdate);
                         }
                     }
                 }
@@ -215,7 +205,7 @@ namespace OpenSG.AI
                     Console.Write(deltaUpdate.AudioTranscript);
                     Console.Write(deltaUpdate.Text);
                     if (OnAIMessageReceived != null)
-                        OnAIMessageReceived.Invoke(this, deltaUpdate.AudioTranscript);
+                        OnAIMessageReceived.Invoke(this, deltaUpdate);
 
                     if (deltaUpdate.AudioBytes != null)
                         speakerOutput.EnqueueForPlayback(deltaUpdate.AudioBytes);
@@ -230,16 +220,10 @@ namespace OpenSG.AI
                 if (update is ConversationItemStreamingFinishedUpdate itemFinishedUpdate)
                 {
                     Console.WriteLine();
-                    if (!string.IsNullOrEmpty(itemFinishedUpdate.FunctionName))
-                    {
-                        if (OnAIToolExecuted != null)
-                            OnAIToolExecuted.Invoke(this, itemFinishedUpdate.FunctionName);
-                    }
                     if (itemFinishedUpdate.FunctionName == m_getAGVStateTool.Name)
                     {
                         Console.WriteLine($" <<< **GetAGVState() tool invoked -- get!");
                         string r = ToolsManager.GetAGVState();
-                        Console.WriteLine($" <<< **ToolsManager.GetAGVState():{r}");
                         ConversationItem functionOutputItem = ConversationItem.CreateFunctionCallOutput(itemFinishedUpdate.FunctionCallId, r);
 
                         await session.AddItemAsync(functionOutputItem);
@@ -317,8 +301,15 @@ namespace OpenSG.AI
             string? aoaiDeployment = "gpt-4o";
             string? aoaiApiKey = Environment.GetEnvironmentVariable("AZURE_OPENAI_API_KEY1");
 
+
+
+
+
+
             AzureOpenAIClient aoaiClient = new(new Uri(aoaiEndpoint), new ApiKeyCredential(aoaiApiKey));
+
             ChatClient _chatClient = aoaiClient.GetChatClient(aoaiDeployment);
+
 
             return _chatClient;
         }

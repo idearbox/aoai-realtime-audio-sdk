@@ -1,4 +1,4 @@
-﻿using CSAudioVisualization;
+﻿using OpenAI.RealtimeConversation;
 using OpenSG.AI;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
@@ -16,6 +16,9 @@ using System.Windows.Threading;
 using Telerik.Windows.Controls;
 using Telerik.Windows.Controls.ConversationalUI;
 using Telerik.Windows.Documents.Spreadsheet.Expressions.Functions;
+
+#pragma warning disable OPENAI002
+#pragma warning disable AOAI001 
 
 namespace RealtimeInteractiveWPFApp
 {
@@ -201,13 +204,13 @@ namespace RealtimeInteractiveWPFApp
             return audioVisualization;
         }
 
-        private async void AiAgent_OnUserMessageReceived(object? sender, string e)
+        private async void AiAgent_OnUserMessageReceived(object? sender, ConversationInputTranscriptionFinishedUpdate e)
         {
             _ = Dispatcher.InvokeAsync(new Action(() =>
             {
                 if (tkChat.LastMessage == null || tkChat.LastMessage.Message.Author != currentAuthor)
                 {
-                    tkChat.AddMessage(currentAuthor, e);
+                    tkChat.AddMessage(currentAuthor, e.Transcript);
                 }
                 else
                 {
@@ -221,13 +224,13 @@ namespace RealtimeInteractiveWPFApp
             }), DispatcherPriority.Normal);
         }
 
-        private async void AiAgent_OnAiMessageReceived(object? sender, string e)
+        private async void AiAgent_OnAiMessageReceived(object? sender, ConversationItemStreamingPartDeltaUpdate e)
         {
             _ = Dispatcher.InvokeAsync(new Action(() =>
              {
                  if (tkChat.LastMessage == null || tkChat.LastMessage.Message.Author != aiAuthor)
                  {
-                     tkChat.AddMessage(aiAuthor, e);
+                     tkChat.AddMessage(aiAuthor, e.AudioTranscript);
                  }
                  else
                  {
