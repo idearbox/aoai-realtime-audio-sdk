@@ -3,16 +3,19 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:wf="clr-namespace:System.Windows.Forms;assembly=System.Windows.Forms"
         xmlns:local="clr-namespace:RealtimeInteractiveWPFApp"
         xmlns:telerik="http://schemas.telerik.com/2008/xaml/presentation" 
         mc:Ignorable="d"
-        Title="AI3DWindow" Height="450" Width="800" >
-    <Grid Background="Black">
+        Title="AI3DWindow" Height="450" Width="800" SizeChanged="Window_SizeChanged" >
+    <Grid  Background="Black" >
         <Grid.RowDefinitions>
             <RowDefinition Height="1*"/>
             <RowDefinition Height="60"/>
         </Grid.RowDefinitions>
-        <WindowsFormsHost x:Name="ws3DHost" Grid.Row="0" Margin="8,0,0,0" Background="Black" />
+        <WindowsFormsHost x:Name="wfUnityHost" Grid.Row="0" Margin="8">
+            <wf:Panel x:Name="unityPanel" />
+        </WindowsFormsHost>
         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Grid.ColumnSpan="2" >
             <telerik:RadButton telerik:StyleManager.Theme="Green" x:Name="btnClose" Content="Close"  Width="100" Height="40" VerticalAlignment="Center" Grid.Row="1" Click="btnClose_Click"  Margin="4,0,8,0"/>
         </StackPanel>

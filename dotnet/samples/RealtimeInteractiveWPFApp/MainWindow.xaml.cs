@@ -34,14 +34,6 @@ namespace RealtimeInteractiveWPFApp
         public static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, int[] attrValue, int attrSize);
         public const int DWWMA_CAPTION_COLOR = 35;
 
-        [DllImport("UnityPlayer.dll", CallingConvention = CallingConvention.Cdecl)]
-        //private static extern int UnityMain(IntPtr hInstance, IntPtr hPrevInstance, string lpCmdLine, int nShowCmd);
-        public static extern int UnityMain(IntPtr hInstance, IntPtr hPrevInstance, [MarshalAs(UnmanagedType.LPWStr)] string lpCmdLine, int nShowCmd);
-
-        [DllImport("Ai.Unity.dll", CallingConvention = CallingConvention.Cdecl)]
-        public static extern void SetMessage(string message);
-        //public static extern void SetMessage([MarshalAs(UnmanagedType.LPStr)] string message);
-
         private Author currentAuthor;
         private Author aiAuthor;
         private OpenSGManager aiAgent;
@@ -258,32 +250,13 @@ namespace RealtimeInteractiveWPFApp
         {
             Console.WriteLine("111");
             ai3DWindow.Show();
-            //string cmd = $"-parentHWND {wfUnityHost.Handle} -logFile log.txt";
-            //string cmd = $"-parentHWND {wfUnityHost.Handle} -logFile log2.txt";
-            //UnityMain(Process.GetCurrentProcess().Handle, IntPtr.Zero, cmd, 5);
-            //UnityMain(IntPtr.Zero, IntPtr.Zero, cmd, 1);
-            //await this.StartUnityAsync(cmd);
+
 
         }
         private void btnLog_Click(object sender, RoutedEventArgs e)
         {
-            SetMessage("hello from WPF->unity");
+            //SetMessage("hello from WPF->unity");
             Console.WriteLine("222");
-        }
-        private async Task StartUnityAsync(string args)
-        {
-            Console.WriteLine("111...StartUnityAsync");
-            await Task.Yield();
-
-            try
-            {
-                _ = UnityMain(Process.GetCurrentProcess().Handle, IntPtr.Zero, args, 1);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.ToString());
-            }
-            Console.WriteLine("222...StartUnityAsync");
         }
 
         private void radToggleButton_Checked(object sender, RoutedEventArgs e)
