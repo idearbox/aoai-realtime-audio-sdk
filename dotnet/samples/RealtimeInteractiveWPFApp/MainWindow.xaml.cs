@@ -259,6 +259,7 @@ namespace RealtimeInteractiveWPFApp
             Console.WriteLine("222");
             string s=ToolsManager.DoSearch2("searchOpenSGDocument", textBox1.Text, aiAgent.chatClient);
             //string s = ToolsManager.DoSearch2("searchDGTDocument", textBox1.Text, aiAgent.chatClient);
+            //string s=ToolsManager.DoSearch2("searchFMSDocument", textBox1.Text, aiAgent.chatClient);
             Console.WriteLine( $"xxx:{s}");
         }
 

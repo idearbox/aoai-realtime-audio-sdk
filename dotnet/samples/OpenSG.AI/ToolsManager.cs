@@ -101,7 +101,7 @@ namespace OpenSG.AI
         public static string DoSearch2(string searchType, string message, ChatClient chatClient)
         {
             string? aaiSearchEndpoint = "https://osg-ai-search-001.search.windows.net";
-            string? aaiSearchKey = "w8t95lsKmkIm8zOrGIT7fdNMklWgwhnQkm42HmadI9AzSeA5rc3d";
+            string? aaiSearchKey = Environment.GetEnvironmentVariable("AZURE_AI_SEARCH_KEY1");// "w8t95lsKmkIm8zOrGIT7fdNMklWgwhnQkm42HmadI9AzSeA5rc3d";
             string? aaiSearchIndex = "";
 
             if (searchType == "searchDGTDocument")
