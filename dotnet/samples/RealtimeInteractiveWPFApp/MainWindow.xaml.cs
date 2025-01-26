@@ -9,6 +9,7 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
+using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
@@ -29,6 +30,10 @@ namespace RealtimeInteractiveWPFApp
     public partial class MainWindow : Window
     {
 
+        [DllImport("DwmApi")]
+        public static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, int[] attrValue, int attrSize);
+        public const int DWWMA_CAPTION_COLOR = 35;
+
         [DllImport("UnityPlayer.dll", CallingConvention = CallingConvention.Cdecl)]
         //private static extern int UnityMain(IntPtr hInstance, IntPtr hPrevInstance, string lpCmdLine, int nShowCmd);
         public static extern int UnityMain(IntPtr hInstance, IntPtr hPrevInstance, [MarshalAs(UnmanagedType.LPWStr)] string lpCmdLine, int nShowCmd);
@@ -42,8 +47,14 @@ namespace RealtimeInteractiveWPFApp
         private OpenSGManager aiAgent;
         private AudioVisualization audioVisualizationAI;
         private AudioVisualization audioVisualizationUser;
+
+        private AI3DWindow ai3DWindow = new AI3DWindow();
         public MainWindow()
         {
+            IntPtr hWnd = new WindowInteropHelper(this).EnsureHandle();
+            int[] colorstr = new int[] { 0x111111 };
+            DwmSetWindowAttribute(hWnd, DWWMA_CAPTION_COLOR, colorstr, 4);
+
             StyleManager.ApplicationTheme = new GreenTheme();
 
             InitializeComponent();
@@ -54,10 +65,10 @@ namespace RealtimeInteractiveWPFApp
 
         private void btnClose_Click(object sender, RoutedEventArgs e)
         {
-            audioVisualizationAI.Stop();
-            audioVisualizationUser.Stop();
-            audioVisualizationAI.Dispose();
-            audioVisualizationUser.Dispose();
+            audioVisualizationAI?.Stop();
+            audioVisualizationUser?.Stop();
+            audioVisualizationAI?.Dispose();
+            audioVisualizationUser?.Dispose();
             Close();
             Application.Current.Shutdown();
         }
@@ -246,6 +257,7 @@ namespace RealtimeInteractiveWPFApp
         private void btnLoad3D_Click(object sender, RoutedEventArgs e)
         {
             Console.WriteLine("111");
+            ai3DWindow.Show();
             //string cmd = $"-parentHWND {wfUnityHost.Handle} -logFile log.txt";
             //string cmd = $"-parentHWND {wfUnityHost.Handle} -logFile log2.txt";
             //UnityMain(Process.GetCurrentProcess().Handle, IntPtr.Zero, cmd, 5);
