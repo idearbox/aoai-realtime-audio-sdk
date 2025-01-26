@@ -1,4 +1,5 @@
-﻿using OpenAI.RealtimeConversation;
+﻿using CSAudioVisualization;
+using OpenAI.RealtimeConversation;
 using OpenSG.AI;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
@@ -65,8 +66,6 @@ namespace RealtimeInteractiveWPFApp
         {
             audioVisualizationAI = InitializeAudioVisualAI();
             audioVisualizationUser = InitializeAudioVisualUser();
-
-
 
             aiAgent = new OpenSGManager();
             _ = Task.Run(() => aiAgent.RunAIAgent());
@@ -237,7 +236,7 @@ namespace RealtimeInteractiveWPFApp
                      TextMessage? tm = tkChat.LastMessage?.Message as TextMessage;
                      if (tm != null && tm.Author == aiAuthor)
                      {
-                         tm.Text += e;
+                         tm.Text += e.AudioTranscript;
                      }
                  }
                  tkChat.TypingIndicatorVisibility = Visibility.Collapsed;

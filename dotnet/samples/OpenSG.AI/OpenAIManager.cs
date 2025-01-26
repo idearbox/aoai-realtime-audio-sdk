@@ -28,8 +28,11 @@ namespace OpenSG.AI
         private SpeakerOutput speakerOutput;
         public event EventHandler<ConversationInputTranscriptionFinishedUpdate> OnUserMessageReceived;
         public event EventHandler<ConversationItemStreamingPartDeltaUpdate> OnAIMessageReceived;
+        public event EventHandler<string> OnUserSpeechFinished;
+        public event EventHandler<string> OnAIToolExecuted;
+
         public MicrophoneAudioStream Mic;
-        RealtimeConversationSession _session;
+        private RealtimeConversationSession _session;
         private bool isRecording = false;
         public async Task RunAIAgent()
         {
@@ -176,6 +179,8 @@ namespace OpenSG.AI
                 if (update is ConversationInputSpeechFinishedUpdate speechFinishedUpdate)
                 {
                     Console.WriteLine($" <<< End of speech detected @ {speechFinishedUpdate.AudioEndTime}");
+                    if (OnUserSpeechFinished != null)
+                        OnUserSpeechFinished.Invoke(this, "End of speech detected");
                 }
 
                 // conversation.item.input_audio_transcription.completed will only arrive if input transcription was
@@ -220,6 +225,11 @@ namespace OpenSG.AI
                 if (update is ConversationItemStreamingFinishedUpdate itemFinishedUpdate)
                 {
                     Console.WriteLine();
+                    if (!string.IsNullOrEmpty(itemFinishedUpdate.FunctionName))
+                    {
+                        if (OnAIToolExecuted != null)
+                            OnAIToolExecuted.Invoke(this, itemFinishedUpdate.FunctionName);
+                    }
                     if (itemFinishedUpdate.FunctionName == m_getAGVStateTool.Name)
                     {
                         Console.WriteLine($" <<< **GetAGVState() tool invoked -- get!");
@@ -288,7 +298,7 @@ namespace OpenSG.AI
 
         private RealtimeConversationClient GetRealTimeClient()
         {
-            string? aoaiEndpoint = "https://kisoo-m3xuw55t-eastus2.openai.azure.com/";// 
+            string? aoaiEndpoint = "https://sample-lab-02.openai.azure.com/";// "https://kisoo-m3xuw55t-eastus2.openai.azure.com/";// 
             string? aoaiDeployment = "gpt-4o-realtime-preview";
             string? aoaiApiKey = Environment.GetEnvironmentVariable("AZURE_OPENAI_API_KEY1");
 
@@ -297,14 +307,9 @@ namespace OpenSG.AI
         }
         private ChatClient GetChatClient()
         {
-            string? aoaiEndpoint = "https://kisoo-m3xuw55t-eastus2.cognitiveservices.azure.com/";
+            string? aoaiEndpoint = "https://sample-lab-02.openai.azure.com/";// "https://kisoo-m3xuw55t-eastus2.cognitiveservices.azure.com/";
             string? aoaiDeployment = "gpt-4o";
             string? aoaiApiKey = Environment.GetEnvironmentVariable("AZURE_OPENAI_API_KEY1");
-
-
-
-
-
 
             AzureOpenAIClient aoaiClient = new(new Uri(aoaiEndpoint), new ApiKeyCredential(aoaiApiKey));
 
