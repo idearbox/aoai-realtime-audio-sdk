@@ -1151,6 +1151,7 @@ namespace OpenSG.AI
                     if (turnFinishedUpdate.Status.ToString() == "incomplete")
                     {
                         Console.WriteLine($"  -- Model turn generation failed. Status: {turnFinishedUpdate.Status}");
+                        await session.StartResponseAsync();
                     }
                     else if (turnFinishedUpdate.Status.ToString() == "completed")
                     {
