@@ -219,7 +219,7 @@ namespace RealtimeInteractiveWPFApp
                     TextMessage? tm = tkChat.LastMessage?.Message as TextMessage;
                     if (tm != null && tm.Author == currentAuthor)
                     {
-                        tm.Text += e;
+                        tm.Text += e.Transcript;
                     }
                 }
                 tkChat.TypingIndicatorVisibility = Visibility.Collapsed;

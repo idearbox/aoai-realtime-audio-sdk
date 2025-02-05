@@ -55,8 +55,7 @@ namespace OpenSG.AI
             public required string eqpAlarmID { get; set; }
         }
 
-
-        public static string DoSearch(string message, ChatClient chatClient)
+        public static string DoSearch1(string message, ChatClient chatClient)
         {
             string? aaiSearchEndpoint = "https://ai-search-lab02.search.windows.net";
             string? aaiSearchKey = Environment.GetEnvironmentVariable("AZURE_AI_SEARCH_KEY1");
@@ -101,17 +100,19 @@ namespace OpenSG.AI
         public static string DoSearch2(string searchType, string message, ChatClient chatClient)
         {
             string? aaiSearchEndpoint = "https://osg-ai-search-001.search.windows.net";
-            string? aaiSearchKey = Environment.GetEnvironmentVariable("AZURE_AI_SEARCH_KEY1");// "w8t95lsKmkIm8zOrGIT7fdNMklWgwhnQkm42HmadI9AzSeA5rc3d";
+            string? aaiSearchKey = "w8t95lsKmkIm8zOrGIT7fdNMklWgwhnQkm42HmadI9AzSeA5rc3d";
             string? aaiSearchIndex = "";
 
-            if (searchType == "searchDGTDocument")
-                aaiSearchIndex = "terminal-vector-1736731672807";
-            else if (searchType == "searchFMSDocument")
-                aaiSearchIndex = "fms-vector-1736732101511";
-            else if (searchType == "searchOpenSGDocument")
-                aaiSearchIndex = "opensg-vector-1736732139133";
-            else if (searchType == "searchMeetingsDocument")
-                aaiSearchIndex = "meetings-vector-1737681585334";
+            if (searchType == "DGTDocument")
+                aaiSearchIndex = "terminal-vector";
+            else if (searchType == "FMSDocument")
+                aaiSearchIndex = "fms-vector";
+            else if (searchType == "OpenSGDocument")
+                aaiSearchIndex = "opensg-vector";
+            else if (searchType == "2024MeetingsDocument")
+                aaiSearchIndex = "meetings-vector-2024";
+            else if (searchType == "2025MeetingsDocument")
+                aaiSearchIndex = "meetings-vector-2025";
             else
                 aaiSearchIndex = "terminal-vector-1736731672807";
 
@@ -121,7 +122,7 @@ namespace OpenSG.AI
             {
                 Endpoint = new Uri(aaiSearchEndpoint),
                 IndexName = aaiSearchIndex,
-                TopNDocuments = 10,
+                TopNDocuments = 50,
                 Authentication = DataSourceAuthentication.FromApiKey(aaiSearchKey),
             });
 
@@ -148,6 +149,7 @@ namespace OpenSG.AI
 
             return completion.Content[0].Text;
         }
+
         public static string GetAGVState()
         {
             string result = $@"{{

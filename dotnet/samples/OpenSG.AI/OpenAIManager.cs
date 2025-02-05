@@ -39,7 +39,8 @@ namespace OpenSG.AI
         private ConversationFunctionTool m_searchDGTDocumentTool;
         private ConversationFunctionTool m_searchFMSDocumentTool;
         private ConversationFunctionTool m_searchOpenSGDocumentTool;
-        private ConversationFunctionTool m_searchMeetingsDocumentTool;
+        private ConversationFunctionTool m_search2024MeetingsDocumentTool;
+        private ConversationFunctionTool m_search2025MeetingsDocumentTool;
         private ConversationFunctionTool m_getAGVTaskInfoTool;
         private ConversationFunctionTool m_getTaskContainerListTool;
         private ConversationFunctionTool m_getFrequentAlarmListTool;
@@ -80,43 +81,24 @@ namespace OpenSG.AI
             // First, we create a client according to configured environment variables (see end of file) and then start
             // a new conversation session.
             initClient();
-            //string instruction = $"You are an AI assistant designed to help Fleet Management System (FMS) operators manage and optimize the operations of automated guided vehicles (AGVs) in a smart port.+" +
-            //                      "FMS developed by Smart Port Team in OpenSG. " +
-            //                      "You were developed by OpenSG Co., Ltd., a company based in South Korea, and your main developers are Song Kisoo and Han Yujin, who created you." +
-            //                      "Song Kisoo is very kind, sweet and hansome" +
-            //                      "You are knowledgeable in port logistics. Provide actionable insights to improve AGV scheduling, minimize downtime, and ensure smooth terminal operations. " +
-            //                      "answer questions based on information you searched in the knowledge base as much as passible, " +
-            //                      "accessible with the 'search' tool. The user is listening to answers with audio, " +
-            //                      //"so it's *super* important that answers are as short as possible, a single sentence if at all possible." +
-            //                      "Always speak speedy and use the following step-by-step instructions to respond: " +
-            //                      "1. Always use the 'search' tool to check the knowledge base before answering a question. " +
-            //                      "2. Produce an answer that's as short as possible. " +
-            //                      //"3. If the answer isn't in the knowledge base, say you don't know." +
-            //                      "following word should be pronounced as a word in Korean. For example:" +
-            //                      "'AGV=>AGV', 'TOS=>토스', 'FMS=>FMS', 'Fleet Management System=>FMS'" +
-            //                      "AGV 호기 번호를 발음할 때 일, 이, 삼 같은 한자어 숫자를 사용하세요. 예를 들어, 304라는 숫자는 '삼백사'로 발음하고 텍스트 전달시에는 304로 전달해줘. " +
-            //                      "AGV 호기 번호를 발음할 때 일상적인 대화에서 사용하는 '하나, 둘, 셋'을 사용하지마.";
-            //string instruction = $"너는 스마트 항만에서 자동화된 AGV(무인 운송 차량)의 운영을 관리하고 최적화하는 데 도움을 주기 위해 개발된 FMS(Fleet Management System)의 운영자를 위한 AI 어시스턴트야. " +
-            //                     "FMS는 주식회사 OpenSG의 스마트 항만 팀에서 개발했어. " +
-            //                     "너는 한국에 본사를 둔 OpenSG 주식회사에서 개발되었으며, 주요 개발자는 송기수와 한유진이야." +
-            //                     "송기수는 매우 친절하고, 다정하며, 잘생긴 사람이다." +
-            //                     "너는 항만 물류에 대한 전문 지식을 가지고 있어. AGV 스케줄링을 개선하고, 다운타임을 최소화하며, 터미널 운영이 원활하게 이루어지도록 실질적인 인사이트를 제공해." +
-            //                     "지식 베이스에서 검색한 정보를 최대한 활용하여 질문에 답변해. 사용자는 답변을 음성으로 듣고 있으니, " +
-            //                     "항상 답변은 빠르게 발음해(speak fast)." +
-            //                     "다음 단계별 지침을 따르면서 응답해줘: " +
-            //                     "1. 질문에 답하기 전에 항상 'search' 도구를 사용해 지식 베이스를 확인해." +
-            //                     "2. 가능한 한 짧고 간결한 답변을 만들어." +
-            //                     "다음 단어의 발음은 각 알파벳을 개별적으로 읽어줘" +
-            //                     //"AGV 단어 발음은 각 알파벳을 개별적으로 읽어줘, 예를들어 AGV=>'A'(에이), 'G'(지), 'V'(브이)' 처럼 발음해줘" +
-            //                     "AGV 단어 발음은 각 알파벳을 개별적으로 읽어줘, 예를들어 AGV=>'A', 'G', 'V' 로 발음해줘" +
-            //                     "같은 방법으로 AGV, TOS, FMS 단어들도 각 알파벳을 개별적으로 읽어줘" +
-            //                     "AGV 호기 번호 (AGV ID)를 발음할 때는 '1, 2, 3' 같은 한자어 숫자를 사용해. 예를 들어, 304라는 숫자는 '3'(삼), '0'(공), '4'(사)로 발음해줘." +
-            //                     "AGV 호기 번호 (AGV ID)를 발음할 때 '하나, 둘, 셋' 같은 표현은 절대 사용하지 마. " +
-            //                     "AGV ID를 제외한 숫자를 읽을 때는 지침을 무시하고 정상적으로 읽어줘. 숫자 단위를 읽을 때 틀리게 읽지 않도록 주의해줘. " +
-            //                     "되묻지 말고 군대식으로 간단명료하게 대답해.";
-
             string instruction = $"너는 스마트 항만에서 자동화된 AGV(무인 운송 차량)의 운영을 관리하고 최적화하는 데 도움을 주기 위해 개발된 FMS(Fleet Management System)의 운영자를 위한 AI 어시스턴트야. " +
-                                 "FMS는 주식회사 OpenSG의 스마트 항만 팀에서 개발했어. ";
+                                     "FMS는 주식회사 OpenSG의 스마트 항만 팀에서 개발했어. " +
+                                     "너는 한국에 본사를 둔 OpenSG 주식회사에서 개발되었으며, 주요 개발자는 송기수와 한유진이야." +
+                                     "송기수는 매우 친절하고, 다정하며, 잘생긴 사람이다." +
+                                     "너는 항만 물류에 대한 전문 지식을 가지고 있어. AGV 스케줄링을 개선하고, 다운타임을 최소화하며, 터미널 운영이 원활하게 이루어지도록 실질적인 인사이트를 제공해." +
+                                     "지식 베이스에서 검색한 정보를 최대한 활용하여 질문에 답변해. 사용자는 답변을 음성으로 듣고 있으니, " +
+                                     "항상 답변은 빠르게 발음해(speak fast)." +
+                                     "다음 단계별 지침을 따르면서 응답해줘: " +
+                                     "1. 질문에 답하기 전에 항상 'search' 도구를 사용해 지식 베이스를 확인해." +
+                                     "2. 가능한 한 짧고 간결한 답변을 만들어." +
+                                     "다음 단어의 발음은 각 알파벳을 개별적으로 읽어줘" +
+                                     //"AGV 단어 발음은 각 알파벳을 개별적으로 읽어줘, 예를들어 AGV=>'A'(에이), 'G'(지), 'V'(브이)' 처럼 발음해줘" +
+                                     "AGV 단어 발음은 각 알파벳을 개별적으로 읽어줘, 예를들어 AGV=>'A', 'G', 'V' 로 발음해줘" +
+                                     "같은 방법으로 AGV, TOS, FMS 단어들도 각 알파벳을 개별적으로 읽어줘" +
+                                     "AGV 호기 번호 (AGV ID)를 발음할 때는 '1, 2, 3' 같은 한자어 숫자를 사용해. 예를 들어, 304라는 숫자는 '3'(삼), '0'(공), '4'(사)로 발음해줘." +
+                                     "AGV 호기 번호 (AGV ID)를 발음할 때 '하나, 둘, 셋' 같은 표현은 절대 사용하지 마. " +
+                                     "AGV ID를 제외한 숫자를 읽을 때는 지침을 무시하고 정상적으로 읽어줘. 숫자 단위를 읽을 때 틀리게 읽지 않도록 주의해줘. " +
+                                     "되묻지 말고 군대식으로 간단명료하게 대답해.";
 
 
             // We'll add a simple function tool that enables the model to interpret user input to figure out when it
@@ -140,7 +122,7 @@ namespace OpenSG.AI
                 Parameters = BinaryData.FromString("{}")
             };
 
-            //    string parameterSchemaJson = @"
+            //        string parameterSchemaJson = @"
             //{
             //    ""type"": ""object"",
             //    ""properties"": {
@@ -152,13 +134,13 @@ namespace OpenSG.AI
             //    ""required"": [""query""]
             //}";
 
-            //    m_searchTool = new()
-            //    {
-            //        Name = "search",
-            //        Description = "Search the knowledge base, The knowledge base is in English, translate to and from English if needed." +
-            //                        "Results are text content.",
-            //        Parameters = BinaryData.FromString(parameterSchemaJson),
-            //    };
+            //        m_searchTool = new()
+            //        {
+            //            Name = "search",
+            //            Description = "Search the knowledge base, The knowledge base is in English, translate to and from English if needed." +
+            //                            "Results are text content.",
+            //            Parameters = BinaryData.FromString(parameterSchemaJson),
+            //        };
 
             string parameterSchemaJson2 = @"
                 {
@@ -178,7 +160,7 @@ namespace OpenSG.AI
                     ""properties"": {
                         ""query"": {
                             ""type"": ""string"",
-                            ""description"": ""When using the vector search tool, provide the full user question as the query. Avoid simplifying or truncating the input.""
+                            ""description"": ""Search query. Related keyword retrieved from user input.""
                         }
                     },
                     ""required"": [""query""]
@@ -199,41 +181,43 @@ namespace OpenSG.AI
             m_searchDGTDocumentTool = new()
             {
                 Name = "search_dgt_document_tool",
-                Description = @"동원글로벌터미널, Dongwon Global Terminal, DGT 대한 정보를 제공하는 함수이다. 
+                Description = @"동원 글로벌 터미널 (Dongwon Global Terminal, DGT)에 대한 정보를 제공하는 함수이다. 
                         정보를 3 문장 이내로 요약해 답변한다. 사용자가 자세한 정보를 요청하면 10 문장 이내로 답변한다.",
-                //        Description= @"
-                //This tool provides information about 동원 글로벌 터미널, Dongwon Global Terminal (DGT), 
-                //including its location, services, operational details, and role in the logistics industry. 
-                //For example, you can ask:
-                //- What services does Dongwon Global Terminal provide?
-                //- Where is Dongwon Global Terminal located?
-                //- What is DGT's annual container throughput?",
                 Parameters = BinaryData.FromString(searchParameter)
             };
 
             m_searchFMSDocumentTool = new()
             {
                 Name = "search_fms_document_tool",
-                Description = @"FMS (Fleet Management Software, 에프엠에스), AGV (Automated Guided Vehicle, 에이지비)의 길이 또는 사양, 
-                        STS (에스티에스), QC (큐씨), PB (Parallel Buffer, 피비, 버퍼), ATC (애이티씨), ARMG, Backreach (백리치), Highway (하이웨이), Block (블록)에 대한 정의를 제공하는 함수이다. 
-                        정보를 3 문장 이내로 요약해 답변한다. 사용자가 자세한 정보를 요청하면 10 문장 이내로 답변한다.",
+                Description = @"FMS (에프엠에스), AGV (에이지비)의 길이 또는 사양, 
+                        STS (에스티에스), QC (큐씨), PB (Parallel Buffer, 피비, 버퍼), ATC (애이티씨), Highway (하이웨이), Smart Gate (스마트 게이트), Air-lock Gate (에어락 게이트)와 관련된 정보를 제공하는 함수이다. 
+                        정보를 5 문장 이내로 요약해 답변한다. 사용자가 자세한 정보를 요청하면 10 문장 이내로 답변한다.",
                 Parameters = BinaryData.FromString(searchParameter)
             };
 
             m_searchOpenSGDocumentTool = new()
             {
                 Name = "search_opensg_document_tool",
-                Description = @"FMS의 개발사 OpenSG (오픈에스지)에 대한 정보를 제공하는 함수이다. 오픈에스지의 주요 연혁, 조직도, 임원 (송기수, 남성일, 이성훈 (Sung Hoon Lee)) 세부 정보,
-                        매출액, 물류자동화 주요 실적, 주요 사업 영역 등의 정보를 제공한다.
-                        정보를 3 문장 이내로 요약해 답변한다. 사용자가 자세한 정보를 요청하면 10 문장 이내로 답변한다.",
+                Description = @"FMS의 개발 회사 OpenSG (오픈에스지)에 대한 정보를 제공하는 함수이다. 오픈에스지의 주요 연혁, 조직도, 주요 임직원 (송기수, 남성일, 이성훈) 정보,
+                        매출액, 주요 실적, 주요 사업 영역 등의 정보를 제공한다.
+                        정보를 5 문장 이내로 요약해 답변한다. 사용자가 자세한 정보를 요청하면 10 문장 이내로 답변한다.",
                 Parameters = BinaryData.FromString(searchParameter)
             };
 
-            m_searchMeetingsDocumentTool = new()
+            m_search2024MeetingsDocumentTool = new()
             {
-                Name = "search_meetings_document_tool",
-                Description = @"FMS의 개발사 OpenSG (오픈에스지)의 주간 회의 기록을 제공하는 함수이다.
-                        2024년 1월 1주차부터 2025년 1월 3주차까지 매주 진행 된 팀 별 업무 내용을 포함한다.
+                Name = "search_2024_meetings_document_tool",
+                Description = @"FMS의 개발사 OpenSG (오픈에스지)의 2024년 진행된 주간 회의 기록을 제공하는 함수이다.
+                        주간 회의에 참석하는 팀 구성은 매 주 다를 수 있다. 팀 명 목록은 다음과 같다:
+                        Standard Robot 팀, AI&Cloud 팀, PMO 팀, 기구설계 팀, IvCS ACS 팀, Absolics EFEM 팀, SKON 팀, 부산항만 팀, IsCS 팀 
+                        정보를 5 문장 이내로 요약해 답변한다. 사용자가 자세한 정보를 요청하면 10 문장 이내로 답변한다.",
+                Parameters = BinaryData.FromString(searchParameter)
+            };
+
+            m_search2025MeetingsDocumentTool = new()
+            {
+                Name = "search_2025_meetings_document_tool",
+                Description = @"FMS의 개발사 OpenSG (오픈에스지)의 2025년 진행된 주간 회의 기록을 제공하는 함수이다.
                         주간 회의에 참석하는 팀 구성은 매 주 다를 수 있다. 팀 명 목록은 다음과 같다:
                         Standard Robot 팀, AI&Cloud 팀, PMO 팀, 기구설계 팀, IvCS ACS 팀, Absolics EFEM 팀, SKON 팀, 부산항만 팀, IsCS 팀 
                         정보를 3 문장 이내로 요약해 답변한다. 사용자가 자세한 정보를 요청하면 10 문장 이내로 답변한다.",
@@ -277,16 +261,16 @@ namespace OpenSG.AI
             m_getFrequentAlarmListTool = new()
             {
                 Name = "get_frequent_alarm_list",
-                Description = @"오늘 날짜의 전체 AGV 별로 발생한 알람의 빈도 수를 조회하는 함수이다. 
-                        AGV ID 당 알람이 발생한 회수를 조회하며, 가장 알람이 많이 발생했거나 적게 발생한 AGV를 찾을 수 있는 함수이다. 
+                Description = @"오늘 날짜의 전체 AGV 별로 발생한 알람의 빈도 수를 조회하는 함수이다.
+                        AGV ID 당 알람이 발생한 회수를 조회하며, 가장 알람이 많이 발생했거나 적게 발생한 AGV를 찾을 수 있는 함수이다. Red, Yellow는 레드, 옐로우로 읽는다.
                         반환값 빈 문자열은 오늘 알람이 발생하지 않았음을 의미한다."
             };
 
             m_getAGVAlarmHistoryTool = new()
             {
                 Name = "get_agv_alarm_history",
-                Description = @"오늘 날짜의 특정 AGV에서 발생한 알람 기록을 조회하는 함수이다. 알람 ID와 설명, 발생 시간, 발생 위치, 부가 설명 등의 정보를 조회할 수 있는 함수이다. 
-                        발생 시간과 종료 시간을 통해 알람이 지속된 시간을 파악할 수 있는 함수이다.
+                Description = @"오늘 날짜의 특정 AGV에서 발생한 알람 기록을 조회하는 함수이다. 'ALARM_NO'번 알람이라고 지칭한다. 알람 ID와 설명, 발생 시간, 발생 위치, 부가 설명 등의 정보를 조회할 수 있는 함수이다. 
+                        발생 시간과 종료 시간을 통해 알람이 지속된 시간을 파악할 수 있는 함수이다. Red, Yellow는 레드, 옐로우로 읽는다.
                         반환값 빈 문자열은 오늘 해당 AGV에 알람이 발생하지 않았음을 의미한다.",
                 Parameters = BinaryData.FromString(agvIDParameter)
             };
@@ -388,12 +372,7 @@ namespace OpenSG.AI
                             },
                             ""craneID"": {
                                 ""type"": ""string"",
-                                ""description"": ""Crane ID. 
-                                Valid crane ID must be a number between 101 to 251. 
-                                QC (STS) Crane ID ranges from 101 to 109. 
-                                ATC (Block) Crane ID ranges from 207 to 251.
-                                - Sometimes user can pass crane ID that is number from 04 to 27 followed by 'W'.
-                                - Convert 04W to 207, 05W to 209, 06W to 211, ..., 24W to 247, 25W to 249, 26W to 251.""
+                                ""description"": ""Crane ID. Valid crane ID must be a number between 101 to 251. QC (STS) Crane ID ranges from 101 to 109. ATC (Block) Crane ID ranges from 207 to 251.  - Sometimes user can pass crane ID that is number from 04 to 27 followed by 'W'. - Convert 04W to 207, 05W to 209, 06W to 211, ..., 24W to 247, 25W to 249, 26W to 251.""
                             }
                         },
                         ""required"": [""agvID"", ""craneID""]
@@ -583,42 +562,43 @@ namespace OpenSG.AI
             // audio transcription with whisper.
             await _session.ConfigureSessionAsync(new ConversationSessionOptions()
             {
-                Voice = ConversationVoice.Alloy,
+                Voice = ConversationVoice.Shimmer,
                 Tools =
                     {
-                        ////m_getAGVStateTool,
-                        ////m_searchTool,
+                        //m_getAGVStateTool,
+                        //m_searchTool,
                         m_searchDGTDocumentTool,
                         m_searchFMSDocumentTool,
                         m_searchOpenSGDocumentTool,
-                        m_searchMeetingsDocumentTool,
-                        //m_getAGVTaskInfoTool,
-                        //m_getTaskContainerListTool,
-                        //m_getAllAGVSummaryTool,
-                        //m_getSingleAGVStateTool,
-                        //m_getStopAGVListTool,
-                        //m_sendToDirectionTool,
-                        //m_sendToPBTool,
-                        ////m_sendToCraneTool,
-                        //m_eStopAllTool,
-                        //m_clearAllEStopTool,
-                        //m_cStopAllTool,
-                        //m_clearAllCStopTool,
-                        //m_sStopAllTool,
-                        //m_clearAllSStopTool,
-                        //m_eStopAGVTool,
-                        //m_resetStatusTool,
-                        //m_zoomInAGVTool,
-                        //m_getAGVBatteryBelowTool,
-                        //m_startChargingTool,
-                        //m_stopChargingTool,
-                        //m_getFrequentAlarmListTool,
-                        //m_getAGVAlarmHistoryTool,
-                        //m_checkAIMSServerConnectionTool,
-                        //m_getEQPInfoTool,
-                        //m_startMultiViewerTool,
-                        //m_startViewerTool,
-                        //m_startATEMRemoteTool
+                        m_search2024MeetingsDocumentTool,
+                        m_search2025MeetingsDocumentTool,
+                        m_getAGVTaskInfoTool,
+                        m_getTaskContainerListTool,
+                        m_getAllAGVSummaryTool,
+                        m_getSingleAGVStateTool,
+                        m_getStopAGVListTool,
+                        m_sendToDirectionTool,
+                        m_sendToPBTool,
+                        m_sendToCraneTool,
+                        m_eStopAllTool,
+                        m_clearAllEStopTool,
+                        m_cStopAllTool,
+                        m_clearAllCStopTool,
+                        m_sStopAllTool,
+                        m_clearAllSStopTool,
+                        m_eStopAGVTool,
+                        m_resetStatusTool,
+                        m_zoomInAGVTool,
+                        m_getAGVBatteryBelowTool,
+                        m_startChargingTool,
+                        m_stopChargingTool,
+                        m_getFrequentAlarmListTool,
+                        m_getAGVAlarmHistoryTool,
+                        m_checkAIMSServerConnectionTool,
+                        m_getEQPInfoTool,
+                        m_startMultiViewerTool,
+                        m_startViewerTool,
+                        m_startATEMRemoteTool
                     },
                 InputAudioFormat = ConversationAudioFormat.Pcm16,
                 OutputAudioFormat = ConversationAudioFormat.Pcm16,
@@ -627,8 +607,6 @@ namespace OpenSG.AI
                 {
                     Model = "whisper-1",
                 },
-
-                MaxOutputTokens = 4096,
             });
 
             // For convenience, we'll proactively start playback to the speakers now. Nothing will play until it's enqueued.
@@ -782,7 +760,7 @@ namespace OpenSG.AI
                             if (itemFinishedUpdate.FunctionName == m_searchDGTDocumentTool.Name)
                             {
                                 Console.WriteLine($" <<< **Search DGT tool invoked -- get!");
-                                string result = ToolsManager.DoSearch2("searchDGTDocument", itemFinishedUpdate.FunctionCallArguments, m_chatClient);
+                                string result = ToolsManager.DoSearch2("DGTDocument", itemFinishedUpdate.FunctionCallArguments, m_chatClient);
                                 Console.WriteLine($" <<< **Search result: {result}");
                                 await HandleFunctionCallResult(session, itemFinishedUpdate, result);
                                 //ConversationItem functionOutputItem = ConversationItem.CreateFunctionCallOutput(itemFinishedUpdate.FunctionCallId, result);
@@ -794,7 +772,7 @@ namespace OpenSG.AI
                             if (itemFinishedUpdate.FunctionName == m_searchFMSDocumentTool.Name)
                             {
                                 Console.WriteLine($" <<< **Search FMS tool invoked -- get!");
-                                string result = ToolsManager.DoSearch2("searchFMSDocument", itemFinishedUpdate.FunctionCallArguments, m_chatClient);
+                                string result = ToolsManager.DoSearch2("FMSDocument", itemFinishedUpdate.FunctionCallArguments, m_chatClient);
                                 Console.WriteLine($" <<< **Search result: {result}");
                                 await HandleFunctionCallResult(session, itemFinishedUpdate, result);
                                 //ConversationItem functionOutputItem = ConversationItem.CreateFunctionCallOutput(itemFinishedUpdate.FunctionCallId, result);
@@ -805,8 +783,7 @@ namespace OpenSG.AI
                             if (itemFinishedUpdate.FunctionName == m_searchOpenSGDocumentTool.Name)
                             {
                                 Console.WriteLine($" <<< **Search OpenSG tool invoked -- get!");
-                                //string result = ToolsManager.DoSearch2("searchOpenSGDocument", itemFinishedUpdate.FunctionCallArguments, m_chatClient);
-                                string result = ToolsManager.DoSearch2("searchOpenSGDocument", itemFinishedUpdate.FunctionCallArguments, m_chatClient);
+                                string result = ToolsManager.DoSearch2("OpenSGDocument", itemFinishedUpdate.FunctionCallArguments, m_chatClient);
                                 Console.WriteLine($" <<< **Search result: {result}");
                                 await HandleFunctionCallResult(session, itemFinishedUpdate, result);
                                 //ConversationItem functionOutputItem = ConversationItem.CreateFunctionCallOutput(itemFinishedUpdate.FunctionCallId, result);
@@ -814,10 +791,21 @@ namespace OpenSG.AI
                                 //await session.AddItemAsync(functionOutputItem);
                             }
 
-                            if (itemFinishedUpdate.FunctionName == m_searchMeetingsDocumentTool.Name)
+                            if (itemFinishedUpdate.FunctionName == m_search2024MeetingsDocumentTool.Name)
                             {
                                 Console.WriteLine($" <<< **Search Meetings tool invoked -- get!");
-                                string result = ToolsManager.DoSearch2("searchMeetingsDocument", itemFinishedUpdate.FunctionCallArguments, m_chatClient);
+                                string result = ToolsManager.DoSearch2("2024MeetingsDocument", itemFinishedUpdate.FunctionCallArguments, m_chatClient);
+                                Console.WriteLine($" <<< **Search result: {result}");
+                                await HandleFunctionCallResult(session, itemFinishedUpdate, result);
+                                //ConversationItem functionOutputItem = ConversationItem.CreateFunctionCallOutput(itemFinishedUpdate.FunctionCallId, result);
+
+                                //await session.AddItemAsync(functionOutputItem);
+                            }
+
+                            if (itemFinishedUpdate.FunctionName == m_search2025MeetingsDocumentTool.Name)
+                            {
+                                Console.WriteLine($" <<< **Search Meetings tool invoked -- get!");
+                                string result = ToolsManager.DoSearch2("2025MeetingsDocument", itemFinishedUpdate.FunctionCallArguments, m_chatClient);
                                 Console.WriteLine($" <<< **Search result: {result}");
                                 await HandleFunctionCallResult(session, itemFinishedUpdate, result);
                                 //ConversationItem functionOutputItem = ConversationItem.CreateFunctionCallOutput(itemFinishedUpdate.FunctionCallId, result);
