@@ -1,60 +1,61 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>net9.0-windows</TargetFramework>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <UseWPF>true</UseWPF>
-    <PlatformTarget>x86</PlatformTarget>
-    <AssemblyName>OpenSG.AI.Visual</AssemblyName>
-  </PropertyGroup>
+	<PropertyGroup>
+		<OutputType>Exe</OutputType>
+		<TargetFramework>net9.0-windows</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<UseWPF>true</UseWPF>
+		<UseWindowsForms>true</UseWindowsForms>
+		<PlatformTarget>x86</PlatformTarget>
+		<AssemblyName>OpenSG.AI.Visual</AssemblyName>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <Compile Remove="referenced_dll\**" />
-    <EmbeddedResource Remove="referenced_dll\**" />
-    <None Remove="referenced_dll\**" />
-    <Page Remove="referenced_dll\**" />
-  </ItemGroup>
+	<ItemGroup>
+		<Compile Remove="referenced_dll\**" />
+		<EmbeddedResource Remove="referenced_dll\**" />
+		<None Remove="referenced_dll\**" />
+		<Page Remove="referenced_dll\**" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Azure.AI.OpenAI" Version="2.1.0-beta.2" />
-    <PackageReference Include="Azure.Identity" Version="1.13.1" />
-    <PackageReference Include="NAudio" Version="2.2.1" />
-    <PackageReference Include="OpenAI" Version="2.1.0-beta.2" />
-    <PackageReference Include="telerik.ui.for.wpf.netcore.xaml" Version="2023.1.315" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Azure.AI.OpenAI" Version="2.1.0-beta.2" />
+		<PackageReference Include="Azure.Identity" Version="1.13.1" />
+		<PackageReference Include="NAudio" Version="2.2.1" />
+		<PackageReference Include="OpenAI" Version="2.1.0-beta.2" />
+		<PackageReference Include="telerik.ui.for.wpf.netcore.xaml" Version="2023.1.315" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\OpenSG.AI\OpenSG.AI.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\OpenSG.AI\OpenSG.AI.csproj" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <Compile Update="Properties\Settings.Designer.cs">
-      <DesignTimeSharedInput>True</DesignTimeSharedInput>
-      <AutoGen>True</AutoGen>
-      <DependentUpon>Settings.settings</DependentUpon>
-    </Compile>
-  </ItemGroup>
+	<ItemGroup>
+		<Compile Update="Properties\Settings.Designer.cs">
+			<DesignTimeSharedInput>True</DesignTimeSharedInput>
+			<AutoGen>True</AutoGen>
+			<DependentUpon>Settings.settings</DependentUpon>
+		</Compile>
+	</ItemGroup>
 
-  <ItemGroup>
-    <None Update="Properties\Settings.settings">
-      <Generator>SettingsSingleFileGenerator</Generator>
-      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
-    </None>
-  </ItemGroup>
+	<ItemGroup>
+		<None Update="Properties\Settings.settings">
+			<Generator>SettingsSingleFileGenerator</Generator>
+			<LastGenOutput>Settings.Designer.cs</LastGenOutput>
+		</None>
+	</ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="referencedDLL\" />
-  </ItemGroup>
+	<ItemGroup>
+		<Folder Include="referencedDLL\" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <Reference Include="CSAudioVisualization">
-      <HintPath>referencedDLL\CSAudioVisualization.dll</HintPath>
-    </Reference>
-    <Reference Include="CSCore">
-      <HintPath>referencedDLL\CSCore.dll</HintPath>
-    </Reference>
-  </ItemGroup>
+	<ItemGroup>
+		<Reference Include="CSAudioVisualization">
+			<HintPath>referencedDLL\CSAudioVisualization.dll</HintPath>
+		</Reference>
+		<Reference Include="CSCore">
+			<HintPath>referencedDLL\CSCore.dll</HintPath>
+		</Reference>
+	</ItemGroup>
 
 </Project>

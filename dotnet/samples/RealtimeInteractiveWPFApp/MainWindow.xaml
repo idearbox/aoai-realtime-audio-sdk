@@ -19,9 +19,10 @@
             <RowDefinition Height="60"/>
         </Grid.RowDefinitions>
 
-        <telerik:RadChat x:Name="tkChat" Margin="8,8,8,0" InputBoxText="" telerik:StyleManager.Theme="Green" Background="#FF313131" Grid.ColumnSpan="2" />
+        <telerik:RadChat x:Name="tkChat" Margin="8,8,8,0" InputBoxText="" telerik:StyleManager.Theme="Green" Background="#FF313131" Grid.ColumnSpan="2" SendMessage="tkChat_SendMessage" />
         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Grid.ColumnSpan="2" >
-            <telerik:RadToggleButton telerik:StyleManager.Theme="Green" x:Name="radToggleButton" Content="Voice Command" Height="40" IsChecked="False" IsThreeState="False" Width="120" Margin="4,0,0,0" Unchecked="radToggleButton_Unchecked" Checked="radToggleButton_Checked" />
+            <telerik:RadToggleButton telerik:StyleManager.Theme="Green" x:Name="radToggleButton1" Content="Listening..." Height="40" IsChecked="False" IsThreeState="False" Width="80" Margin="4,0,0,0" Unchecked="radToggleButton1_Unchecked" Checked="radToggleButton1_Checked" />
+            <telerik:RadToggleButton telerik:StyleManager.Theme="Green" x:Name="radToggleButton2" Content="Speaking..." Height="40" IsChecked="False" IsThreeState="False" Width="80" Margin="4,0,0,0" Unchecked="radToggleButton2_Unchecked" Checked="radToggleButton2_Checked" />
             <telerik:RadButton telerik:StyleManager.Theme="Green" x:Name="btnLog" Content="log"  Width="100" Height="40" VerticalAlignment="Center" Click="btnLog_Click"  Margin="4,0,0,0"/>
             <telerik:RadButton telerik:StyleManager.Theme="Green" x:Name="btnLoad3D" Content="Load 3D"  Width="100" Height="40" VerticalAlignment="Center" Grid.Row="1" Click="btnLoad3D_Click" Margin="4,0,0,0"/>
             <telerik:RadButton telerik:StyleManager.Theme="Green" x:Name="btnInit" Content="Init"  Width="100" Height="40" VerticalAlignment="Center" Grid.Row="1" Click="btnInit_Click" Margin="4,0,0,0"/>
@@ -29,6 +30,6 @@
         </StackPanel>
         <WindowsFormsHost x:Name="wsUser" Grid.Row="1" Margin="8,0,0,0" Background="Black" />
         <WindowsFormsHost x:Name="wsAI" Grid.Column="1" Grid.Row="1" Margin="0,0,8,0" Background="Black" />
-        <TextBox x:Name="textBox1" Margin="10,0,164,0" Grid.Row="2" TextWrapping="Wrap" VerticalAlignment="Center"/>
+        <TextBox x:Name="textBox1" Margin="10,0,277,0" Grid.Row="2" TextWrapping="Wrap" VerticalAlignment="Center"/>
     </Grid>
 </Window>

@@ -62,7 +62,7 @@ namespace RealtimeInteractiveWPFApp
             audioVisualizationAI?.Dispose();
             audioVisualizationUser?.Dispose();
             Close();
-            Application.Current.Shutdown();
+            System.Windows.Application.Current.Shutdown();
         }
 
         private void btnInit_Click(object sender, RoutedEventArgs e)
@@ -257,40 +257,73 @@ namespace RealtimeInteractiveWPFApp
         {
             //SetMessage("hello from WPF->unity");
             Console.WriteLine("222");
-            string s=ToolsManager.DoSearch2("searchOpenSGDocument", textBox1.Text, aiAgent.chatClient);
+            string s = ToolsManager.DoSearch2("searchOpenSGDocument", textBox1.Text, aiAgent.chatClient);
             //string s = ToolsManager.DoSearch2("searchDGTDocument", textBox1.Text, aiAgent.chatClient);
             //string s=ToolsManager.DoSearch2("searchFMSDocument", textBox1.Text, aiAgent.chatClient);
-            Console.WriteLine( $"xxx:{s}");
+            Console.WriteLine($"xxx:{s}");
         }
 
-        private void radToggleButton_Checked(object sender, RoutedEventArgs e)
+        private void radToggleButton1_Checked(object sender, RoutedEventArgs e)
         {
             if (aiAgent == null || aiAgent.Mic == null)
                 return;
             aiAgent.StartRecording();
 
-            radToggleButton.Background = Brushes.Green;
+            //radToggleButton.Background = Brushes.Green;
 
             //Start:
-            audioVisualizationAI.Start();
+            //audioVisualizationAI.Start();
             audioVisualizationUser.Start();
         }
 
-        private void radToggleButton_Unchecked(object sender, RoutedEventArgs e)
+        private void radToggleButton1_Unchecked(object sender, RoutedEventArgs e)
         {
             if (aiAgent == null || aiAgent.Mic == null)
                 return;
             aiAgent.StopRecording();
-            radToggleButton.Background = Brushes.Gray;
+            //radToggleButton.Background = Brushes.Gray;
 
             //Stop:
             //audioVisualizationAI.Start();
             audioVisualizationUser.Stop();
         }
 
+        private void radToggleButton2_Checked(object sender, RoutedEventArgs e)
+        {
+            if (aiAgent == null)
+                return;
+            aiAgent.StartSpeaking();
+
+            //radToggleButton.Background = Brushes.Green;
+
+            //Start:
+            audioVisualizationAI.Start();
+            //audioVisualizationUser.Start();
+        }
+
+        private void radToggleButton2_Unchecked(object sender, RoutedEventArgs e)
+        {
+            if (aiAgent == null)
+                return;
+            aiAgent.StopSpeaking();
+            //radToggleButton.Background = Brushes.Gray;
+
+            //Stop:
+            audioVisualizationAI.Stop();
+            //audioVisualizationUser.Stop();
+        }
+        
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             this.Height = 100 + 50;
+        }
+
+        private void tkChat_SendMessage(object sender, SendMessageEventArgs e)
+        {
+            if (aiAgent == null)
+                return;
+            TextMessage? textMessage = e.Message as TextMessage;
+            aiAgent.SendInputTextMessage(textMessage.Text);
         }
     }
 }

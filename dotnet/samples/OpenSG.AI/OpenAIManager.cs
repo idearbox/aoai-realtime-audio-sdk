@@ -73,7 +73,8 @@ namespace OpenSG.AI
         #endregion
         public MicrophoneAudioStream Mic;
         private RealtimeConversationSession _session;
-        private bool isRecording = false;
+        private bool enableRecording = false;
+        private bool enableSpeaking = false;
         public async Task RunAIAgent()
         {
             // First, we create a client according to configured environment variables (see end of file) and then start
@@ -656,6 +657,7 @@ namespace OpenSG.AI
         {
             await foreach (ConversationUpdate update in session.ReceiveUpdatesAsync())
             {
+                //Console.WriteLine($"<<update>>:{update}");
                 // session.created is the very first command on a session and lets us know that connection was successful.
                 if (update is ConversationSessionStartedUpdate)
                 {
@@ -707,9 +709,10 @@ namespace OpenSG.AI
                 // the audio response transcript, function arguments, and audio data.
                 if (update is ConversationItemStreamingPartDeltaUpdate deltaUpdate)
                 {
-                    Console.Write(deltaUpdate.AudioTranscript);
-                    Console.Write(deltaUpdate.Text);
-                    if (deltaUpdate.AudioBytes != null)
+                    //Console.Write($"deltaUpdate.AudioTranscript:{deltaUpdate.AudioTranscript}");
+                    //Console.Write($"deltaUpdate.Text:{deltaUpdate.Text}");
+                    
+                    if (deltaUpdate.AudioBytes != null && enableSpeaking)
                         speakerOutput.EnqueueForPlayback(deltaUpdate.AudioBytes);
 
                     if (OnAIMessageReceived != null)
@@ -1247,14 +1250,33 @@ namespace OpenSG.AI
         public void StartRecording()
         {
             Mic.StartRecording();
-            isRecording = true;
+            enableRecording = true;
 
         }
 
         public void StopRecording()
         {
             Mic.StopRecording();
-            isRecording = false;
+            enableRecording = false;
+        }
+
+        public void StartSpeaking()
+        {
+            enableSpeaking = true;
+
+        }
+
+        public void StopSpeaking()
+        {
+            enableSpeaking = false;
+        }
+
+        public void SendInputTextMessage(string message)
+        {
+            ConversationItem userMessage= ConversationItem.CreateUserMessage([message]);
+
+            _session.AddItem(userMessage);
+            _session.StartResponse();
         }
     }
 }
