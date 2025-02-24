@@ -562,7 +562,8 @@ namespace OpenSG.AI
             // audio transcription with whisper.
             await _session.ConfigureSessionAsync(new ConversationSessionOptions()
             {
-                Voice = ConversationVoice.Shimmer,
+                //*alloy, ash, ballad, coral, *echo, sage, *shimmer, verse
+                Voice = new ConversationVoice("sage"),// ConversationVoice.Shimmer,
                 Tools =
                     {
                         //m_getAGVStateTool,
